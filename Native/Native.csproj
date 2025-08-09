@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>at365.Native365</RootNamespace>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Platforms>AnyCPU;x64</Platforms>
+    <AssemblyName>at365.Native365</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Method\" />
+  </ItemGroup>
+
+</Project>
