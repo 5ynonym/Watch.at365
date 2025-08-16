@@ -255,7 +255,6 @@ namespace at365.Gesture365
             [
                 AppDomain.CurrentDomain.FriendlyName.ToLower(),
                 "explorer.exe",
-
             ],
             [GestureButton.Middle] =
             [
