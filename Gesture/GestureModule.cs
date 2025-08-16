@@ -30,7 +30,7 @@ namespace at365.Gesture365
 
             // XButton1 F17を割り当てる。(マウス側で最小化を割り当てるとリモートデスクトップを貫通しない)
             whenver(ModifierKeys.None, Key.F17, NativeHelper.MinimizeWindow, null);
-            // XButton2 F18は使わずにマウス側でAlt+F4を割り当てる
+            // XButton2 F18は使わずにマウス側でAlt+F4を割り当てる (Alt+F4はリモートデスクトップを貫通する)
             whenver(ModifierKeys.None, Key.F18, SendKeyActions.Alt_F4, null);
             // XButton3
             whenver(ModifierKeys.None, Key.F19, NativeHelper.MoveCursor, null);
@@ -62,15 +62,15 @@ namespace at365.Gesture365
             explorer(MouseTrigger.MiddleButtonDown, SendKeyActions.Explorer.NewTab);
 
             var browser = GestureManager.WhenMouse("msedge.exe", "chrome.exe");
-            browser(MouseTrigger.MiddleButtonDown, SendKeyActions.WebBrowser.NewTab);
             browser(MouseTrigger.RightButtonDown, SendKeyActions.WebBrowser.NewTab);
+            browser(MouseTrigger.MiddleButtonDown, SendKeyActions.WebBrowser.NewTab);
         }
 
         private void InitializeMoveGesture()
         {
             var explorer = GestureManager.WhenMove("explorer.exe");
-            explorer("新しいタブ", [MoveTrigger.MoveDown, MoveTrigger.MoveRight], SendKeyActions.Explorer.NewTab);
-            explorer("タブを閉じる", [MoveTrigger.MoveDown, MoveTrigger.MoveLeft], SendKeyActions.Explorer.CloseTab);
+            //explorer("新しいタブ", [MoveTrigger.MoveDown, MoveTrigger.MoveRight], SendKeyActions.Explorer.NewTab);
+            //explorer("タブを閉じる", [MoveTrigger.MoveDown, MoveTrigger.MoveLeft], SendKeyActions.Explorer.CloseTab);
             explorer("進む", [MoveTrigger.MoveRight], SendKeyActions.Explorer.Forward);
             explorer("戻る", [MoveTrigger.MoveLeft], SendKeyActions.Explorer.Back);
             explorer("上へ", [MoveTrigger.MoveUp], SendKeyActions.Explorer.Up);
