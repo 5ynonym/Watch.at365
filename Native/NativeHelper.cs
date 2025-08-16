@@ -86,6 +86,8 @@ namespace at365.Native365
             }
         }
 
+        private const int FIT_PADDING_TOP = 60;
+        private const int FIT_PADDING_BOTTOM = 70;
         /// <summary>
         /// 画面の中央に移動
         /// 中央よりも移動方向の端に近ければ何もせずfalseを返却
@@ -109,8 +111,8 @@ namespace at365.Native365
             DwmGetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS, out var rect2, Marshal.SizeOf(typeof(RECT)));
             fitTop |= rect2.Height <= workingArea.Height && rect.Top < workingArea.Top;
             fitBottom |= rect2.Height <= workingArea.Height && rect.Bottom > workingArea.Bottom;
-            fitTop |= (rect.Top > workingArea.Top - 50 && rect.Top < workingArea.Top + 60);
-            fitBottom |= (rect.Bottom > workingArea.Bottom - 50 && rect.Bottom < workingArea.Bottom + 60);
+            fitTop |= (rect.Top > workingArea.Top - FIT_PADDING_TOP && rect.Top < workingArea.Top + FIT_PADDING_TOP);
+            fitBottom |= (rect.Bottom > workingArea.Bottom - FIT_PADDING_BOTTOM && rect.Bottom < workingArea.Bottom + FIT_PADDING_BOTTOM);
 
             var adjustHeight = rect.Height - rect2.Height;
             var newLeft = rect.Left - diff;
@@ -175,8 +177,8 @@ namespace at365.Native365
             DwmGetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS, out var rect2, Marshal.SizeOf(typeof(RECT)));
             fitTop |= rect2.Height <= workingArea.Height && rect.Top < workingArea.Top;
             fitBottom |= rect2.Height <= workingArea.Height && rect.Bottom > workingArea.Bottom;
-            fitTop |= (rect.Top > workingArea.Top - 50 && rect.Top < workingArea.Top + 60);
-            fitBottom |= (rect.Bottom > workingArea.Bottom - 50 && rect.Bottom < workingArea.Bottom + 60);
+            fitTop |= (rect.Top > workingArea.Top - FIT_PADDING_TOP && rect.Top < workingArea.Top + FIT_PADDING_TOP);
+            fitBottom |= (rect.Bottom > workingArea.Bottom - FIT_PADDING_BOTTOM && rect.Bottom < workingArea.Bottom + FIT_PADDING_BOTTOM);
 
             var adjustWidth = (rect.Width - rect2.Width);
             var adjustHeight = rect.Height - rect2.Height;
