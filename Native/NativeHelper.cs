@@ -148,7 +148,8 @@ namespace at365.Native365
                 rect.Left -= workingArea.Width;
                 rect.Right -= workingArea.Width;
                 var workingArea2 = GetWorkingArea(rect);
-                if (workingArea2.Left == workingArea.Left && workingArea2.Top == workingArea.Top)
+                if ((workingArea2.Left == workingArea.Left && workingArea2.Top == workingArea.Top)
+                    || workingArea2.Height != workingArea.Height) // 高さが違うモニター間の移動はなし
                 {
                     return false;
                 }
@@ -159,7 +160,8 @@ namespace at365.Native365
                 rect.Left += workingArea.Width;
                 rect.Right += workingArea.Width;
                 var workingArea2 = GetWorkingArea(rect);
-                if (workingArea2.Left == workingArea.Left && workingArea2.Top == workingArea.Top)
+                if ((workingArea2.Left == workingArea.Left && workingArea2.Top == workingArea.Top)
+                    || workingArea2.Height != workingArea.Height) // 高さが違うモニター間の移動はしない
                 {
                     return false;
                 }
