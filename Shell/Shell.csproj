@@ -18,6 +18,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Common\**" />
+    <Compile Remove="Modules\**" />
+    <EmbeddedResource Remove="Common\**" />
+    <EmbeddedResource Remove="Modules\**" />
+    <None Remove="Common\**" />
+    <None Remove="Modules\**" />
+    <Page Remove="Common\**" />
+    <Page Remove="Modules\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Resources\Off.ico" />
     <None Remove="Resources\On.ico" />
     <None Remove="Resources\Watch.ico" />
@@ -62,13 +73,6 @@
     <Page Update="Watch.xaml">
       <SubType>Designer</SubType>
     </Page>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Common\Native\" />
-    <Folder Include="Common\Util\" />
-    <Folder Include="Modules\Gesture\" />
-    <Folder Include="Modules\Action\" />
   </ItemGroup>
 
 </Project>

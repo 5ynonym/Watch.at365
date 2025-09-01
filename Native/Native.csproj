@@ -13,7 +13,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Method\" />
+    <Compile Remove="Method\**" />
+    <EmbeddedResource Remove="Method\**" />
+    <None Remove="Method\**" />
+    <Page Remove="Method\**" />
   </ItemGroup>
 
 </Project>
