@@ -80,7 +80,6 @@ namespace at365.Gesture365
             //browser("タブを閉じる", [MoveTrigger.MoveDown, MoveTrigger.MoveLeft], SendKeyActions.WebBrowser.CloseTab);
             browser("タブを復元", [MoveTrigger.MoveUp], SendKeyActions.WebBrowser.RestoreTab);
             browser("全画面", [MoveTrigger.MoveUp, MoveTrigger.MoveDown], SendKeyActions.F11);
-            browser("タブを復元", [MoveTrigger.MoveLeft, MoveTrigger.MoveDown, MoveTrigger.MoveRight], SendKeyActions.WebBrowser.RestoreTab);
             browser("リロード", [MoveTrigger.MoveDown], SendKeyActions.WebBrowser.Reload);
             browser("進む", [MoveTrigger.MoveRight], SendKeyActions.WebBrowser.Forward);
             browser("戻る", [MoveTrigger.MoveLeft], SendKeyActions.WebBrowser.Back);
