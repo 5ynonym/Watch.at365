@@ -76,8 +76,8 @@ namespace at365.Gesture365
             explorer("上へ", [MoveTrigger.MoveUp], SendKeyActions.Explorer.Up);
 
             var browser = GestureManager.WhenMove("msedge.exe", "chrome.exe");
-            browser("新しいタブ", [MoveTrigger.MoveDown, MoveTrigger.MoveRight], SendKeyActions.WebBrowser.NewTab);
-            browser("タブを閉じる", [MoveTrigger.MoveDown, MoveTrigger.MoveLeft], SendKeyActions.WebBrowser.CloseTab);
+            //browser("新しいタブ", [MoveTrigger.MoveDown, MoveTrigger.MoveRight], SendKeyActions.WebBrowser.NewTab);
+            //browser("タブを閉じる", [MoveTrigger.MoveDown, MoveTrigger.MoveLeft], SendKeyActions.WebBrowser.CloseTab);
             browser("タブを復元", [MoveTrigger.MoveUp], SendKeyActions.WebBrowser.RestoreTab);
             browser("全画面", [MoveTrigger.MoveUp, MoveTrigger.MoveDown], SendKeyActions.F11);
             browser("タブを復元", [MoveTrigger.MoveLeft, MoveTrigger.MoveDown, MoveTrigger.MoveRight], SendKeyActions.WebBrowser.RestoreTab);
