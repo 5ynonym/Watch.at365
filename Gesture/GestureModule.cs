@@ -36,13 +36,16 @@ namespace at365.Gesture365
             whenver(ModifierKeys.None, Key.F19, NativeHelper.MoveCursor, null);
             // ホイールクリック
             whenver(ModifierKeys.None, Key.F20, SendKeyActions.OpenExplorer, NativeHelper.AdjustFullHeight);
-            // 左チルト
-            whenver(ModifierKeys.None, Key.F21, NativeHelper.MoveWindowToLeft, SendKeyActions.WindowSnap.Left);
-            // 右チルト
-            whenver(ModifierKeys.None, Key.F22, NativeHelper.MoveWindowToRight, SendKeyActions.WindowSnap.Right);
 
-            whenver(ModifierKeys.None, Key.F23, SendKeyActions.WindowSnap.Left, null);
-            whenver(ModifierKeys.None, Key.F24, SendKeyActions.WindowSnap.Right, null);
+            // Win+F21はゲーミングコパイロットに割り当てられるので使用不可
+            whenver(ModifierKeys.None, Key.F21, NativeHelper.MoveWindowToLeft, null);
+            // Win+F22は変なWindows機能に割り当てられるので使用不可
+            whenver(ModifierKeys.None, Key.F22, NativeHelper.MoveWindowToRight, null);
+
+            // 左チルト
+            whenver(ModifierKeys.None, Key.F23, NativeHelper.MoveWindowToLeft, SendKeyActions.WindowSnap.Left);
+            // 右チルト
+            whenver(ModifierKeys.None, Key.F24, NativeHelper.MoveWindowToRight, SendKeyActions.WindowSnap.Right);
         }
 
         private void InitializeButtonGesture()
