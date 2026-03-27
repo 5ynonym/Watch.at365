@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using at365.Clipboard365;
 using at365.Common365;
@@ -35,6 +37,7 @@ namespace at365.Shell
                 NativeHelper.SetupOverlayWindowStyle(this);
                 Hide();
 
+                InitializeDisplayChangeNotification();
                 InitializeWatch();
                 InitializeHotkeys();
                 InitializeModules();
@@ -59,6 +62,41 @@ namespace at365.Shell
         {
             GestureModule.Start();
             ClipboardModule.Start();
+        }
+
+        private void InitializeDisplayChangeNotification()
+        {
+            var source = HwndSource.FromHwnd(new System.Windows.Interop.WindowInteropHelper(this).Handle);
+            source?.AddHook(WndProc);
+        }
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == (int)NativeMethods.WM_DISPLAYCHANGE)
+            {
+                RestartApplication();
+                handled = true;
+            }
+
+            return IntPtr.Zero;
+        }
+
+        private static void RestartApplication()
+        {
+            try
+            {
+                var currentProcess = Process.GetCurrentProcess();
+                var exePath = currentProcess.MainModule?.FileName;
+
+                if (exePath != null)
+                {
+                    Process.Start(exePath);
+                    System.Windows.Application.Current?.Shutdown();
+                }
+            }
+            catch
+            {
+            }
         }
 
         private void InitializeHotkeys()
