@@ -51,6 +51,21 @@ namespace at365.Native365
             Forms.Application.SetSuspendState(Forms.PowerState.Suspend, false, false);
         }
 
+        public static void SwitchRDPToConsole()
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = "/c tscon rdp-tcp#0 /dest:console",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+            }
+            catch { }
+        }
+
         public static void MoveCursor()
         {
             var bounds = Screen.PrimaryScreen.Bounds;

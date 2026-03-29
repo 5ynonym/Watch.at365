@@ -23,29 +23,42 @@ namespace at365.Gesture365
 
         private void InitializeKeyGesture()
         {
+            var NONE = ModifierKeys.None;
+            var ALT_WIN = ModifierKeys.Alt | ModifierKeys.Windows;
+            var ALL_MOD = ModifierKeys.Control | ModifierKeys.Shift | ModifierKeys.Alt;
+
             var whenver = HotKeyManager.When();
-            //whenver(ModifierKeys.None, Key.F13, GestureProvider.Actions.ToggleProcessBlackList, null);
-            whenver(ModifierKeys.None, Key.F13, NativeHelper.OpenCurrentProcessFolder, null);
-            whenver(ModifierKeys.None, Key.F14, NativeHelper.CopyPointedWindowProcessName, null);
+            whenver(ALL_MOD, Key.M, NativeHelper.MoveCursor, null);
 
-            // XButton1 F17を割り当てる。(マウス側で最小化を割り当てるとリモートデスクトップを貫通しない)
-            whenver(ModifierKeys.None, Key.F17, NativeHelper.MinimizeWindow, null);
-            // XButton2 F18は使わずにマウス側でAlt+F4を割り当てる (Alt+F4はリモートデスクトップを貫通する)
-            whenver(ModifierKeys.None, Key.F18, SendKeyActions.Alt_F4, null);
-            // XButton3
-            whenver(ModifierKeys.None, Key.F19, NativeHelper.MoveCursor, null);
-            // ホイールクリック
-            whenver(ModifierKeys.None, Key.F20, SendKeyActions.OpenExplorer, NativeHelper.AdjustFullHeight);
+            //whenver(none , Key.F13, GestureProvider.Actions.ToggleProcessBlackList, null);
+            //whenver(none , Key.F14, NativeHelper.CopyPointedWindowProcessName, null);
 
-            // Win+F21はゲーミングコパイロットに割り当てられるので使用不可
-            whenver(ModifierKeys.None, Key.F21, NativeHelper.MoveWindowToLeft, null);
-            // Win+F22は変なWindows機能に割り当てられるので使用不可
-            whenver(ModifierKeys.None, Key.F22, NativeHelper.MoveWindowToRight, null);
+            whenver(ALT_WIN, Key.F1, NativeHelper.OpenCurrentProcessFolder, null);
+            whenver(NONE, Key.F13, NativeHelper.OpenCurrentProcessFolder, null);
+
+            whenver(ALT_WIN, Key.F4, NativeHelper.SwitchRDPToConsole, null);
+            whenver(NONE, Key.F16, NativeHelper.SwitchRDPToConsole, null);
+
+            // XButton1 (マウス側で最小化を割り当てるとリモートデスクトップを貫通しない)
+            whenver(NONE, Key.F17, NativeHelper.MinimizeWindow, null);
+
+            // XButton2 マウス側でAlt+F4を割り当てる (Alt+F4はリモートデスクトップを貫通する)
+            whenver(NONE, Key.F18, SendKeyActions.Alt_F4, null);
+
+            // ホイールクリック用
+            whenver(NONE, Key.F20, SendKeyActions.OpenExplorer, NativeHelper.AdjustFullHeight);
+
+            // F21は変なWindows機能に割り当てられるので使用不可
+            // F22はゲーミングコパイロットに割り当てられるので使用不可
+            whenver(ALT_WIN, Key.F10, NativeHelper.AdjustFullHeight, null);
 
             // 左チルト
-            whenver(ModifierKeys.None, Key.F23, NativeHelper.MoveWindowToLeft, SendKeyActions.WindowSnap.Left);
+            whenver(ALT_WIN, Key.F11, NativeHelper.MoveWindowToLeft, SendKeyActions.WindowSnap.Left);
+            whenver(NONE, Key.F23, NativeHelper.MoveWindowToLeft, SendKeyActions.WindowSnap.Left);
+
             // 右チルト
-            whenver(ModifierKeys.None, Key.F24, NativeHelper.MoveWindowToRight, SendKeyActions.WindowSnap.Right);
+            whenver(ALT_WIN, Key.F12, NativeHelper.MoveWindowToRight, SendKeyActions.WindowSnap.Right);
+            whenver(NONE, Key.F24, NativeHelper.MoveWindowToRight, SendKeyActions.WindowSnap.Right);
         }
 
         private void InitializeButtonGesture()
