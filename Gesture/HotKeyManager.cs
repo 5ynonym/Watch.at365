@@ -35,7 +35,14 @@ namespace at365.Gesture365
 
         public static Action<ModifierKeys, Key, Action, Action?> When(params string[] process)
         {
-            return (modifierKeys, key, action, gestureAction) => Instance.RegisterHotKey(process, modifierKeys, key, action, gestureAction);
+            return (modifierKeys, key, action, gestureAction) =>
+            {
+                try
+                {
+                    Instance.RegisterHotKey(process, modifierKeys, key, action, gestureAction);
+                }
+                catch { }
+            };
         }
     }
 }
