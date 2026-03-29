@@ -108,8 +108,6 @@ namespace at365.Shell
                 Thread.Sleep(1000);
                 NativeHelper.TurnOffDisplay();
             }), null);
-            whenever(ModifierKeys.Control | ModifierKeys.Alt | ModifierKeys.Shift, Key.M, NativeHelper.MoveCursor, null);
-            //whenever(ModifierKeys.Windows | ModifierKeys.Control, Key.Down, NativeHelper.MinimizeWindow, null);
         }
 
         private void InitializeWatch()
