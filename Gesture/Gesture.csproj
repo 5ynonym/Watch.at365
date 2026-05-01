@@ -12,6 +12,10 @@
     <AssemblyName>at365.Gesture365</AssemblyName>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
   <ItemGroup>
   </ItemGroup>
 

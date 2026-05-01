@@ -9,4 +9,8 @@
     <AssemblyName>at365.Common365</AssemblyName>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
 </Project>
