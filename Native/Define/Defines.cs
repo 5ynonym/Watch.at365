@@ -43,9 +43,33 @@
         public const uint SWP_NOOWNERZORDER = 0x0200;
         public const uint SWP_SHOWWINDOW = 0x0040;
 
-        public const int VK_LBUTTON = 0x01;
-        public const int VK_RBUTTON = 0x02;
-        public const int VK_MBUTTON = 0x04;
+        public const uint MOD_NONE = 0x0000;
+        public const uint MOD_ALT = 0x0001;
+        public const uint MOD_CONTROL = 0x0002;
+        public const uint MOD_SHIFT = 0x0004;
+        public const uint MOD_WIN = 0x0008;
+
+        // Virtual Key Codes for SendInput
+        public const uint VK_NONE = 0x00;
+        public const uint VK_LBUTTON = 0x01;
+        public const uint VK_RBUTTON = 0x02;
+        public const uint VK_MBUTTON = 0x04;
+        public const uint VK_SHIFT = 0x10;
+        public const uint VK_CONTROL = 0x11;
+        public const uint VK_MENU = 0x12;    // Alt
+        public const uint VK_TAB = 0x09;
+        public const uint VK_LEFT = 0x25;
+        public const uint VK_UP = 0x26;
+        public const uint VK_RIGHT = 0x27;
+        public const uint VK_DOWN = 0x28;
+        public const uint VK_F4 = 0x73;
+        public const uint VK_F5 = 0x74;
+        public const uint VK_F11 = 0x7A;
+        public const uint VK_E = 0x45;
+        public const uint VK_N = 0x4E;
+        public const uint VK_T = 0x54;
+        public const uint VK_LWIN = 0x5B;
+        public const uint VK_RWIN = 0x5C;
 
         public const nint DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
     }

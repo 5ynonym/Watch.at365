@@ -1,51 +1,51 @@
-﻿using WindowsInput;
+﻿using at365.Native365;
 
 namespace at365.Gesture365
 {
     public static class SendKeyActions
     {
-        public static readonly Action Alt_F4 = Create(VirtualKeyCode.MENU, VirtualKeyCode.F4);
-        public static readonly Action Ctrl_N = Create(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_N);
-        public static readonly Action F11 = Create(VirtualKeyCode.None, VirtualKeyCode.F11);
-        public static readonly Action OpenExplorer = Create(VirtualKeyCode.LWIN, VirtualKeyCode.VK_E);
+        public static readonly Action Alt_F4 = Create(NativeMethods.VK_MENU, NativeMethods.VK_F4);
+        public static readonly Action Ctrl_N = Create(NativeMethods.VK_CONTROL, NativeMethods.VK_N);
+        public static readonly Action F11 = Create(NativeMethods.VK_NONE, NativeMethods.VK_F11);
+        public static readonly Action OpenExplorer = Create(NativeMethods.VK_LWIN, NativeMethods.VK_E);
 
         public static class WindowSnap
         {
-            public static readonly Action Left = Create(VirtualKeyCode.LWIN, VirtualKeyCode.LEFT);
-            public static readonly Action Right = Create(VirtualKeyCode.LWIN, VirtualKeyCode.RIGHT);
+            public static readonly Action Left = Create(NativeMethods.VK_LWIN, NativeMethods.VK_LEFT);
+            public static readonly Action Right = Create(NativeMethods.VK_LWIN, NativeMethods.VK_RIGHT);
         }
 
         public static class WebBrowser
         {
-            public static readonly Action PrevTab = Create([VirtualKeyCode.CONTROL, VirtualKeyCode.SHIFT], VirtualKeyCode.TAB);
-            public static readonly Action NextTab = Create(VirtualKeyCode.CONTROL, VirtualKeyCode.TAB);
-            public static readonly Action NewTab = Create(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_T);
-            public static readonly Action CloseTab = Create(VirtualKeyCode.CONTROL, VirtualKeyCode.F4);
-            public static readonly Action RestoreTab = Create([VirtualKeyCode.CONTROL, VirtualKeyCode.SHIFT], VirtualKeyCode.VK_T);
+            public static readonly Action PrevTab = Create([NativeMethods.VK_CONTROL, NativeMethods.VK_SHIFT], NativeMethods.VK_TAB);
+            public static readonly Action NextTab = Create(NativeMethods.VK_CONTROL, NativeMethods.VK_TAB);
+            public static readonly Action NewTab = Create(NativeMethods.VK_CONTROL, NativeMethods.VK_T);
+            public static readonly Action CloseTab = Create(NativeMethods.VK_CONTROL, NativeMethods.VK_F4);
+            public static readonly Action RestoreTab = Create([NativeMethods.VK_CONTROL, NativeMethods.VK_SHIFT], NativeMethods.VK_T);
 
-            public static readonly Action Reload = Create(VirtualKeyCode.CONTROL, VirtualKeyCode.F5);
-            public static readonly Action Back = Create(VirtualKeyCode.MENU, VirtualKeyCode.LEFT);
-            public static readonly Action Forward = Create(VirtualKeyCode.MENU, VirtualKeyCode.RIGHT);
+            public static readonly Action Reload = Create(NativeMethods.VK_CONTROL, NativeMethods.VK_F5);
+            public static readonly Action Back = Create(NativeMethods.VK_MENU, NativeMethods.VK_LEFT);
+            public static readonly Action Forward = Create(NativeMethods.VK_MENU, NativeMethods.VK_RIGHT);
         }
 
         public static class Explorer
         {
-            public static readonly Action PrevTab = Create([VirtualKeyCode.CONTROL, VirtualKeyCode.SHIFT], VirtualKeyCode.TAB);
-            public static readonly Action NextTab = Create(VirtualKeyCode.CONTROL, VirtualKeyCode.TAB);
-            public static readonly Action NewTab = Create(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_T);
-            public static readonly Action CloseTab = Create(VirtualKeyCode.CONTROL, VirtualKeyCode.F4);
+            public static readonly Action PrevTab = Create([NativeMethods.VK_CONTROL, NativeMethods.VK_SHIFT], NativeMethods.VK_TAB);
+            public static readonly Action NextTab = Create(NativeMethods.VK_CONTROL, NativeMethods.VK_TAB);
+            public static readonly Action NewTab = Create(NativeMethods.VK_CONTROL, NativeMethods.VK_T);
+            public static readonly Action CloseTab = Create(NativeMethods.VK_CONTROL, NativeMethods.VK_F4);
 
-            public static readonly Action Back = Create(VirtualKeyCode.MENU, VirtualKeyCode.LEFT);
-            public static readonly Action Forward = Create(VirtualKeyCode.MENU, VirtualKeyCode.RIGHT);
-            public static readonly Action Up = Create(VirtualKeyCode.MENU, VirtualKeyCode.UP);
+            public static readonly Action Back = Create(NativeMethods.VK_MENU, NativeMethods.VK_LEFT);
+            public static readonly Action Forward = Create(NativeMethods.VK_MENU, NativeMethods.VK_RIGHT);
+            public static readonly Action Up = Create(NativeMethods.VK_MENU, NativeMethods.VK_UP);
         }
 
-        private static Action Create(VirtualKeyCode modifierKeyCode, VirtualKeyCode keyCode)
+        private static Action Create(uint modifierKeyCode, uint keyCode)
         {
             return () => InputSimulator.Instance.Keyboard.ModifiedKeyStroke(modifierKeyCode, keyCode);
         }
 
-        private static Action Create(IEnumerable<VirtualKeyCode> modifierKeyCodes, VirtualKeyCode keyCode)
+        private static Action Create(IEnumerable<uint> modifierKeyCodes, uint keyCode)
         {
             return () => InputSimulator.Instance.Keyboard.ModifiedKeyStroke(modifierKeyCodes, keyCode);
         }
