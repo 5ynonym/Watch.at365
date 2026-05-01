@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
@@ -18,13 +20,38 @@ namespace at365.Shell
 {
     public partial class MainWindow : Window
     {
-        private readonly BitmapFrame _iconOn = BitmapFrame.Create(new Uri("pack://application:,,,/Resources/On.ico", UriKind.RelativeOrAbsolute));
-        private readonly BitmapFrame _iconOff = BitmapFrame.Create(new Uri("pack://application:,,,/Resources/Off.ico", UriKind.RelativeOrAbsolute));
+        private readonly Icon _iconOn;
+        private readonly Icon _iconOff;
         private readonly Watch365.Watch _watch = new();
+        private NotifyIcon? _notifyIcon;
+        private ToolStripMenuItem? _monitor0;
+        private ToolStripMenuItem? _monitor1;
+        private ToolStripMenuItem? _monitor2;
+        private ToolStripMenuItem? _monitor3;
+        private ToolStripMenuItem? _alignmentTop;
+        private ToolStripMenuItem? _alignmentBottom;
+        private ToolStripMenuItem? _watchVisible;
 
         public MainWindow()
         {
             InitializeComponent();
+            _iconOn = LoadIconFromResource("Resources/On.ico");
+            _iconOff = LoadIconFromResource("Resources/Off.ico");
+        }
+
+        private static Icon LoadIconFromResource(string resourcePath)
+        {
+            try
+            {
+                var resourceUri = $"pack://application:,,,/{resourcePath}";
+                var streamResourceInfo = System.Windows.Application.GetResourceStream(new Uri(resourceUri));
+                if (streamResourceInfo?.Stream != null)
+                {
+                    return new Icon(streamResourceInfo.Stream);
+                }
+            }
+            catch { }
+            return SystemIcons.Application;
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -37,6 +64,7 @@ namespace at365.Shell
                 NativeHelper.SetupOverlayWindowStyle(this);
                 Hide();
 
+                InitializeNotifyIcon();
                 InitializeDisplayChangeNotification();
                 InitializeWatch();
                 InitializeHotkeys();
@@ -52,8 +80,10 @@ namespace at365.Shell
         protected override void OnClosed(EventArgs e)
         {
             try { _watch.Close(); } catch { }
-            try { notifyIcon.Dispose(); } catch { }
+            try { _notifyIcon?.Dispose(); } catch { }
             try { ModuleBase.DisposeAll(); } catch { }
+            try { _iconOn?.Dispose(); } catch { }
+            try { _iconOff?.Dispose(); } catch { }
 
             base.OnClosed(e);
         }
@@ -62,6 +92,73 @@ namespace at365.Shell
         {
             GestureModule.Start();
             ClipboardModule.Start();
+        }
+
+        private void InitializeNotifyIcon()
+        {
+            _notifyIcon = new NotifyIcon
+            {
+                Icon = _iconOn,
+                Visible = true,
+                Text = "Watch at365"
+            };
+
+            _notifyIcon.MouseClick += (sender, e) =>
+            {
+                if (e.Button == MouseButtons.Left)
+                {
+                    ToggleVisible();
+                }
+            };
+
+            _notifyIcon.MouseUp += (sender, e) =>
+            {
+                if (e.Button == MouseButtons.Right)
+                {
+                    ShowContextMenu();
+                }
+            };
+        }
+
+        private void ShowContextMenu()
+        {
+            var contextMenu = new ContextMenuStrip();
+
+            var monitorMenu = new ToolStripMenuItem("Monitor");
+            _monitor0 = new ToolStripMenuItem("0", null, (s, e) => SetMonitor(0));
+            _monitor1 = new ToolStripMenuItem("1", null, (s, e) => SetMonitor(1));
+            _monitor2 = new ToolStripMenuItem("2", null, (s, e) => SetMonitor(2));
+            _monitor3 = new ToolStripMenuItem("3", null, (s, e) => SetMonitor(3));
+            monitorMenu.DropDownItems.Add(_monitor0);
+            monitorMenu.DropDownItems.Add(_monitor1);
+            monitorMenu.DropDownItems.Add(_monitor2);
+            monitorMenu.DropDownItems.Add(_monitor3);
+            contextMenu.Items.Add(monitorMenu);
+
+            var alignmentMenu = new ToolStripMenuItem("Alignment");
+            _alignmentTop = new ToolStripMenuItem("Top", null, (s, e) => SetAlignment(VerticalAlignment.Top));
+            _alignmentBottom = new ToolStripMenuItem("Bottom", null, (s, e) => SetAlignment(VerticalAlignment.Bottom));
+            alignmentMenu.DropDownItems.Add(_alignmentTop);
+            alignmentMenu.DropDownItems.Add(_alignmentBottom);
+            contextMenu.Items.Add(alignmentMenu);
+
+            contextMenu.Items.Add(new ToolStripSeparator());
+
+            _watchVisible = new ToolStripMenuItem("Toggle Watch", null, (s, e) => ToggleVisible());
+            contextMenu.Items.Add(_watchVisible);
+
+            var displayOffMenu = new ToolStripMenuItem("Turn off Display", null, (s, e) => HandleMenuDisplayOffClick(s, null));
+            contextMenu.Items.Add(displayOffMenu);
+
+            contextMenu.Items.Add(new ToolStripSeparator());
+
+            var exitMenu = new ToolStripMenuItem("Exit", null, (s, e) => HandleMenuExitClick(s, null));
+            contextMenu.Items.Add(exitMenu);
+
+            contextMenu.Opening += (s, e) => UpdateMenuState();
+
+            var pt = Control.MousePosition;
+            contextMenu.Show(new System.Drawing.Point(pt.X, pt.Y));
         }
 
         private void InitializeDisplayChangeNotification()
@@ -114,13 +211,16 @@ namespace at365.Shell
         {
             _watch.IsVisibleChanged += (sender, e) =>
             {
-                if (e.NewValue is bool isVisible && isVisible)
+                if (_notifyIcon != null)
                 {
-                    notifyIcon.IconSource = _iconOn;
-                }
-                else
-                {
-                    notifyIcon.IconSource = _iconOff;
+                    if (e.NewValue is bool isVisible && isVisible)
+                    {
+                        _notifyIcon.Icon = _iconOn;
+                    }
+                    else
+                    {
+                        _notifyIcon.Icon = _iconOff;
+                    }
                 }
             };
 
@@ -132,16 +232,16 @@ namespace at365.Shell
         {
             var settings = Properties.Settings.Default;
             var monitor = settings.Monitor;
-            monitor0.IsChecked = monitor == 0;
-            monitor1.IsChecked = monitor == 1;
-            monitor2.IsChecked = monitor == 2;
-            monitor3.IsChecked = monitor == 3;
+            if (_monitor0 != null) _monitor0.Checked = monitor == 0;
+            if (_monitor1 != null) _monitor1.Checked = monitor == 1;
+            if (_monitor2 != null) _monitor2.Checked = monitor == 2;
+            if (_monitor3 != null) _monitor3.Checked = monitor == 3;
 
-            watchVisible.IsChecked = _watch.IsVisible;
+            if (_watchVisible != null) _watchVisible.Checked = _watch.IsVisible;
 
             var alignment = settings.Alignment;
-            alignmentTop.IsChecked = alignment == (int)VerticalAlignment.Top;
-            alignmentBottom.IsChecked = alignment == (int)VerticalAlignment.Bottom;
+            if (_alignmentTop != null) _alignmentTop.Checked = alignment == (int)VerticalAlignment.Top;
+            if (_alignmentBottom != null) _alignmentBottom.Checked = alignment == (int)VerticalAlignment.Bottom;
         }
 
         private void SetMonitor(int monitor)

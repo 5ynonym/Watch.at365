@@ -2,7 +2,6 @@
     x:Class="at365.Shell.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:tb="clr-namespace:H.NotifyIcon;assembly=H.NotifyIcon.Wpf"
     Left="0"
     Top="0"
     Width="0"
@@ -16,30 +15,4 @@
     WindowStyle="None"
     ThemeMode="None"
     Title="at365.Shell">
-    <tb:TaskbarIcon
-        x:Name="notifyIcon"
-        IconSource="Resources/On.ico"
-        MenuActivation="RightClick"
-        TrayLeftMouseDown="HandleTrayMouseDown"
-        Visibility="Visible">
-        <tb:TaskbarIcon.ContextMenu>
-            <ContextMenu Opened="HandleMenuOpened">
-                <MenuItem Header="Monitor">
-                    <MenuItem Header="0" Name="monitor0" Click="HandleMenuMonitor0" />
-                    <MenuItem Header="1" Name="monitor1" Click="HandleMenuMonitor1" />
-                    <MenuItem Header="2" Name="monitor2" Click="HandleMenuMonitor2" />
-                    <MenuItem Header="3" Name="monitor3" Click="HandleMenuMonitor3" />
-                </MenuItem>
-                <MenuItem Header="Alignment">
-                    <MenuItem Header="Top" Name="alignmentTop"  Click="HandleAlignmentTop" />
-                    <MenuItem Header="Bottom" Name="alignmentBottom" Click="HandleAlignmentBottom" />
-                </MenuItem>
-                <Separator />
-                <MenuItem Header="Toggle Watch" Name="watchVisible" Click="HandleMenuToggleVisibleClick" InputGestureText="Pause" />
-                <MenuItem Header="Turn off Display" Name="displayOff" Click="HandleMenuDisplayOffClick" InputGestureText="Shift+Pause" />
-                <Separator />
-                <MenuItem Header="Exit" Click="HandleMenuExitClick" />
-            </ContextMenu>
-        </tb:TaskbarIcon.ContextMenu>
-    </tb:TaskbarIcon>
 </Window>
