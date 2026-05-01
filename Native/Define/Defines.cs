@@ -17,6 +17,7 @@
 
         public const uint WM_DISPLAYCHANGE = 0x007E;
         public const uint WM_SYSCOMMAND = 0x0112;
+        public const uint WM_HOTKEY = 0x0312;
         public const uint WM_LBUTTONDOWN = 0x0201;
         public const uint WM_LBUTTONUP = 0x0202;
         public const uint WM_RBUTTONDOWN = 0x0204;

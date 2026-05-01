@@ -64,6 +64,9 @@ namespace at365.Shell
                 NativeHelper.SetupOverlayWindowStyle(this);
                 Hide();
 
+                var handle = new WindowInteropHelper(this).Handle;
+                HotKeyManager.Instance.Initialize(handle);
+
                 InitializeNotifyIcon();
                 InitializeDisplayChangeNotification();
                 InitializeWatch();
@@ -79,6 +82,7 @@ namespace at365.Shell
 
         protected override void OnClosed(EventArgs e)
         {
+            try { HotKeyManager.Instance.UnregisterAllHotKeys(); } catch { }
             try { _watch.Close(); } catch { }
             try { _notifyIcon?.Dispose(); } catch { }
             try { ModuleBase.DisposeAll(); } catch { }
@@ -173,6 +177,14 @@ namespace at365.Shell
             {
                 RestartApplication();
                 handled = true;
+            }
+            else if (msg == (int)NativeMethods.WM_HOTKEY)
+            {
+                int hotKeyId = (int)wParam;
+                if (HotKeyManager.Instance.ProcessHotKey(hotKeyId))
+                {
+                    handled = true;
+                }
             }
 
             return IntPtr.Zero;
@@ -297,14 +309,5 @@ namespace at365.Shell
 
         private void HandleMenuDisplayOffClick(object sender, RoutedEventArgs e) => NativeHelper.TurnOffDisplay();
         private void HandleMenuExitClick(object sender, RoutedEventArgs e) => System.Windows.Application.Current?.Shutdown();
-        private void HandleTrayMouseDown(object sender, RoutedEventArgs e) => ToggleVisible();
-        private void HandleMenuOpened(object sender, RoutedEventArgs e) => UpdateMenuState();
-        private void HandleMenuMonitor0(object sender, RoutedEventArgs e) => SetMonitor(0);
-        private void HandleMenuMonitor1(object sender, RoutedEventArgs e) => SetMonitor(1);
-        private void HandleMenuMonitor2(object sender, RoutedEventArgs e) => SetMonitor(2);
-        private void HandleMenuMonitor3(object sender, RoutedEventArgs e) => SetMonitor(3);
-        private void HandleAlignmentTop(object sender, RoutedEventArgs e) => SetAlignment(VerticalAlignment.Top);
-        private void HandleAlignmentBottom(object sender, RoutedEventArgs e) => SetAlignment(VerticalAlignment.Bottom);
-        private void HandleMenuToggleVisibleClick(object sender, RoutedEventArgs e) => ToggleVisible();
     }
 }
