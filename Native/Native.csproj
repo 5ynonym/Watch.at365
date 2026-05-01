@@ -12,6 +12,10 @@
     <AssemblyName>at365.Native365</AssemblyName>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="Method\**" />
     <EmbeddedResource Remove="Method\**" />
