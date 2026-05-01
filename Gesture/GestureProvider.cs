@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using System.Windows.Input;
 using at365.Common365;
 using at365.Native365;
-using DebounceThrottle;
 using static at365.Native365.NativeMethods;
 
 namespace at365.Gesture365
