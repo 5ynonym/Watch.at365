@@ -20,5 +20,20 @@ namespace at365.Gesture365
 
             return str;
         }
+
+        public static uint KeyToVirtualKey(Key key)
+        {
+            return (uint)KeyInterop.VirtualKeyFromKey(key);
+        }
+
+        public static uint ModifierKeysToFlags(ModifierKeys modifierKeys)
+        {
+            uint flags = 0;
+            if ((modifierKeys & ModifierKeys.Alt) != 0) flags |= 0x0001;      // MOD_ALT
+            if ((modifierKeys & ModifierKeys.Control) != 0) flags |= 0x0002;  // MOD_CONTROL
+            if ((modifierKeys & ModifierKeys.Shift) != 0) flags |= 0x0004;    // MOD_SHIFT
+            if ((modifierKeys & ModifierKeys.Windows) != 0) flags |= 0x0008;  // MOD_WIN
+            return flags;
+        }
     }
 }

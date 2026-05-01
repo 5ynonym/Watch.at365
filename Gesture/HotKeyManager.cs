@@ -1,6 +1,8 @@
-﻿using System.Windows.Input;
+﻿using System.Runtime.InteropServices;
+using System.Windows.Input;
+using System.Windows.Interop;
 using at365.Native365;
-using NHotkey.Wpf;
+using static at365.Native365.NativeMethods;
 
 namespace at365.Gesture365
 {
@@ -8,29 +10,80 @@ namespace at365.Gesture365
     {
         public static readonly HotKeyManager Instance = new();
 
+        private nint _windowHandle = 0;
+        private int _hotKeyId = 0;
+        private readonly Dictionary<int, (ModifierKeys modifiers, Key key, Action? action)> _registeredHotKeys = [];
+
+        public void Initialize(nint windowHandle)
+        {
+            _windowHandle = windowHandle;
+        }
+
         public void RegisterHotKey(string[] process, ModifierKeys modifierKeys, Key key, Action? action, Action? gestureAction = null)
         {
+            if (_windowHandle == 0)
+            {
+                throw new InvalidOperationException("HotKeyManager must be initialized with a window handle before registering hotkeys.");
+            }
+
             if (gestureAction != null)
             {
                 GestureManager.Instance.RegisterKeyAction(modifierKeys, key, gestureAction, process);
             }
 
-            var name = KeyHelper.ToString(modifierKeys, key);
-            HotkeyManager.Current.AddOrReplace(name, key, modifierKeys, true, (sender, e) =>
+            int hotKeyId = ++_hotKeyId;
+            uint vk = KeyHelper.KeyToVirtualKey(key);
+            uint modifiers = KeyHelper.ModifierKeysToFlags(modifierKeys);
+
+            if (!NativeMethods.RegisterHotKey(_windowHandle, hotKeyId, modifiers, vk))
             {
-                if (GestureProvider.Instance.ExecuteAction(modifierKeys, key))
+                int error = Marshal.GetLastWin32Error();
+                throw new InvalidOperationException($"Failed to register hotkey. Error code: {error}");
+            }
+
+            _registeredHotKeys[hotKeyId] = (modifierKeys, key, action);
+        }
+
+        public bool ProcessHotKey(int hotKeyId)
+        {
+            if (!_registeredHotKeys.TryGetValue(hotKeyId, out var hotKeyData))
+            {
+                return false;
+            }
+
+            var (modifierKeys, key, action) = hotKeyData;
+
+            if (GestureProvider.Instance.ExecuteAction(modifierKeys, key))
+            {
+                return true;
+            }
+
+            if (action != null)
+            {
+                action();
+                return true;
+            }
+
+            return false;
+        }
+
+        public void UnregisterAllHotKeys()
+        {
+            if (_windowHandle == 0)
+            {
+                return;
+            }
+
+            foreach (var hotKeyId in _registeredHotKeys.Keys.ToList())
+            {
+                try
                 {
-                    e.Handled = true;
+                    NativeMethods.UnregisterHotKey(_windowHandle, hotKeyId);
                 }
-                else if (action != null)
-                {
-                    if (process.Length == 0 || process.Contains(WindowInfo.GetCurrentWindow().ExeName))
-                    {
-                        action();
-                        e.Handled = true;
-                    }
-                }
-            });
+                catch { }
+            }
+
+            _registeredHotKeys.Clear();
         }
 
         public static Action<ModifierKeys, Key, Action, Action?> When(params string[] process)

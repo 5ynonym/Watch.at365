@@ -14,7 +14,6 @@
 
   <ItemGroup>
     <PackageReference Include="H.InputSimulator" Version="1.5.0" />
-    <PackageReference Include="NHotkey.Wpf" Version="4.0.0" />
   </ItemGroup>
 
   <ItemGroup>
