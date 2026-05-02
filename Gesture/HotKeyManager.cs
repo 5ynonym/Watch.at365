@@ -28,7 +28,7 @@ namespace at365.Gesture365
 
             if (gestureAction != null)
             {
-                GestureManager.Instance.RegisterKeyAction(modifierKeys, key, gestureAction, process);
+                MouseGestureManager.Instance.RegisterKeyAction(modifierKeys, key, gestureAction, process);
             }
 
             int hotKeyId = ++_hotKeyId;
@@ -53,7 +53,7 @@ namespace at365.Gesture365
 
             var (modifierKeys, key, action) = hotKeyData;
 
-            if (GestureProvider.Instance.ExecuteAction(modifierKeys, key))
+            if (MouseGestureProvider.Instance.ExecuteAction(modifierKeys, key))
             {
                 return true;
             }

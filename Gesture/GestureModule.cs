@@ -13,12 +13,12 @@ namespace at365.Gesture365
             InitializeKeyGesture();
             InitializeButtonGesture();
             InitializeMoveGesture();
-            GestureProvider.Instance.Initialize();
+            MouseGestureProvider.Instance.Initialize();
         }
 
         protected override void DisposeCore(bool disposing)
         {
-            SafeDispose(GestureProvider.Instance);
+            SafeDispose(MouseGestureProvider.Instance);
         }
 
         private void InitializeKeyGesture()
@@ -30,11 +30,14 @@ namespace at365.Gesture365
             var whenver = HotKeyManager.When();
             whenver(ALL_MOD, Key.M, NativeHelper.MoveCursor, null);
 
-            //whenver(none , Key.F13, GestureProvider.Actions.ToggleProcessBlackList, null);
-            //whenver(none , Key.F14, NativeHelper.CopyPointedWindowProcessName, null);
+            
 
             whenver(ALT_WIN, Key.F1, NativeHelper.OpenCurrentProcessFolder, null);
             whenver(NONE, Key.F13, NativeHelper.OpenCurrentProcessFolder, null);
+
+            whenver(ALT_WIN, Key.F2, MouseGestureProvider.Actions.ToggleProcessBlackList, null);
+            whenver(NONE, Key.F14, MouseGestureProvider.Actions.ToggleProcessBlackList, null);
+            //whenver(none , Key.F14, NativeHelper.CopyPointedWindowProcessName, null);
 
             whenver(ALT_WIN, Key.F4, NativeHelper.SwitchRDPToConsole, null);
             whenver(NONE, Key.F16, NativeHelper.SwitchRDPToConsole, null);
@@ -63,35 +66,25 @@ namespace at365.Gesture365
 
         private void InitializeButtonGesture()
         {
-            //var vs = When("devenv.exe");
-            //var vscode = When("code.exe");
-
-            var whenever = GestureManager.WhenMouse();
+            var whenever = MouseGestureManager.WhenMouse();
             whenever(MouseTrigger.LeftButtonDown, SendKeyActions.WebBrowser.CloseTab);
             whenever(MouseTrigger.RightButtonDown, SendKeyActions.Ctrl_N);
             whenever(MouseTrigger.MiddleButtonDown, SendKeyActions.Ctrl_N);
             whenever(MouseTrigger.WheelDown, SendKeyActions.WebBrowser.NextTab);
             whenever(MouseTrigger.WheelUp, SendKeyActions.WebBrowser.PrevTab);
 
-            var explorer = GestureManager.WhenMouse("explorer.exe");
+            var explorer = MouseGestureManager.WhenMouse("explorer.exe");
             explorer(MouseTrigger.RightButtonDown, SendKeyActions.Explorer.NewTab);
             explorer(MouseTrigger.MiddleButtonDown, SendKeyActions.Explorer.NewTab);
 
-            var browser = GestureManager.WhenMouse("msedge.exe", "chrome.exe");
+            var browser = MouseGestureManager.WhenMouse("msedge.exe", "chrome.exe");
             browser(MouseTrigger.RightButtonDown, SendKeyActions.WebBrowser.NewTab);
             browser(MouseTrigger.MiddleButtonDown, SendKeyActions.WebBrowser.NewTab);
         }
 
         private void InitializeMoveGesture()
         {
-            var explorer = GestureManager.WhenMove("explorer.exe");
-            //explorer("新しいタブ", [MoveTrigger.MoveDown, MoveTrigger.MoveRight], SendKeyActions.Explorer.NewTab);
-            //explorer("タブを閉じる", [MoveTrigger.MoveDown, MoveTrigger.MoveLeft], SendKeyActions.Explorer.CloseTab);
-            explorer("進む", [MoveTrigger.MoveRight], SendKeyActions.Explorer.Forward);
-            explorer("戻る", [MoveTrigger.MoveLeft], SendKeyActions.Explorer.Back);
-            explorer("上へ", [MoveTrigger.MoveUp], SendKeyActions.Explorer.Up);
-
-            var browser = GestureManager.WhenMove("msedge.exe", "chrome.exe");
+            var browser = MouseGestureManager.WhenMove("msedge.exe", "chrome.exe");
             //browser("新しいタブ", [MoveTrigger.MoveDown, MoveTrigger.MoveRight], SendKeyActions.WebBrowser.NewTab);
             //browser("タブを閉じる", [MoveTrigger.MoveDown, MoveTrigger.MoveLeft], SendKeyActions.WebBrowser.CloseTab);
             browser("タブを復元", [MoveTrigger.MoveUp], SendKeyActions.WebBrowser.RestoreTab);

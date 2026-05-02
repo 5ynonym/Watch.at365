@@ -2,9 +2,9 @@
 
 namespace at365.Gesture365
 {
-    public class GestureManager
+    public class MouseGestureManager
     {
-        public static readonly GestureManager Instance = new();
+        public static readonly MouseGestureManager Instance = new();
 
         private readonly Dictionary<(GestureButton, string trigger, string processName), (Action action, string? caption)> _actionMap = new();
         private readonly HashSet<string> _moveActionTargets = [];
