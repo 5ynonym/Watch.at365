@@ -7,9 +7,9 @@ using static at365.Native365.NativeMethods;
 
 namespace at365.Gesture365
 {
-    public class GestureProvider : IDisposable
+    public class MouseGestureProvider : IDisposable
     {
-        public static readonly GestureProvider Instance = new();
+        public static readonly MouseGestureProvider Instance = new();
         public static class Actions
         {
             public static void ToggleProcessBlackList()
@@ -29,7 +29,7 @@ namespace at365.Gesture365
         private bool _throughMode;
         private HashSet<string> _processBlackList = [];
 
-        private GestureProvider()
+        private MouseGestureProvider()
         {
             _callback = (int nCode, uint wParam, [In] MSLLHOOKSTRUCT lParam) =>
             {
@@ -63,17 +63,17 @@ namespace at365.Gesture365
 
         public bool ExecuteAction(MouseTrigger mouseTrigger)
         {
-            return ExecuteAction(GestureManager.CreateTrigger(mouseTrigger));
+            return ExecuteAction(MouseGestureManager.CreateTrigger(mouseTrigger));
         }
 
         public bool ExecuteAction(IEnumerable<MoveTrigger> moveTriggers)
         {
-            return ExecuteAction(GestureManager.CreateTrigger(moveTriggers)) || moveTriggers.Any();
+            return ExecuteAction(MouseGestureManager.CreateTrigger(moveTriggers)) || moveTriggers.Any();
         }
 
         public bool ExecuteAction(ModifierKeys modifierKeys, Key key)
         {
-            return ExecuteAction(GestureManager.CreateTrigger(modifierKeys, key));
+            return ExecuteAction(MouseGestureManager.CreateTrigger(modifierKeys, key));
         }
 
         private void SetHook()
@@ -151,7 +151,7 @@ namespace at365.Gesture365
                 _handled = false;
                 _ready = button;
 
-                if (button == GestureButton.Right && GestureManager.Instance.HasMoveAction(_process))
+                if (button == GestureButton.Right && MouseGestureManager.Instance.HasMoveAction(_process))
                 {
                     _moveTracker.Start(button, _process);
                 }
@@ -203,7 +203,7 @@ namespace at365.Gesture365
 
         private (Action? action, string? caption) GetAction(string trigger)
         {
-            return GestureManager.Instance.GetAction(_ready, trigger, _process);
+            return MouseGestureManager.Instance.GetAction(_ready, trigger, _process);
         }
 
         private bool ExecuteAction(string trigger)
@@ -236,7 +236,8 @@ namespace at365.Gesture365
             if (KeyHelper.HasControl()) return true;
 
             var process = WindowInfo.GetPointedWindow().ExeName;
-            return _processBlackList.Contains(process)
+            return string.IsNullOrWhiteSpace(process)
+                || _processBlackList.Contains(process)
                 || _ignoreProcess[GestureButton.All].Contains(process)
                 || _ignoreProcess[button].Contains(process);
         }

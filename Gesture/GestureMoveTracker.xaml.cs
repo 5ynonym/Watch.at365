@@ -10,14 +10,14 @@ namespace at365.Gesture365
     {
         private readonly string[] _triggerMark = ["⬆️", "⬇️", "⬅️", "➡️"];
         private readonly DispatcherTimer _timer = new DispatcherTimer();
-        private readonly GestureProvider _gestureProvider;
+        private readonly MouseGestureProvider _gestureProvider;
         private readonly List<MoveTrigger> _triggers = new List<MoveTrigger>(100);
         private GestureButton _gestureButton;
         private string? _process;
         private Point _checkPoint;
         private nint _hwnd;
 
-        public GestureMoveTracker(GestureProvider core)
+        public GestureMoveTracker(MouseGestureProvider core)
         {
             InitializeComponent();
             _gestureProvider = core;
@@ -83,7 +83,7 @@ namespace at365.Gesture365
             }
             else
             {
-                var (action, caption) = GestureManager.Instance.GetAction(_gestureButton, _triggers, _process);
+                var (action, caption) = MouseGestureManager.Instance.GetAction(_gestureButton, _triggers, _process);
                 Dispatcher.Invoke(() =>
                 {
                     UpdateIndicator(
