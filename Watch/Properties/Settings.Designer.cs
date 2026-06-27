@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace at365.Watch365.Properties {
+namespace at365.Shell.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
