@@ -1,6 +1,8 @@
 ﻿using System.Windows;
 using System.Windows.Threading;
 using at365.Common365;
+using Clipboard = System.Windows.Clipboard;
+using DataFormats = System.Windows.DataFormats;
 
 namespace at365.Clipboard365
 {

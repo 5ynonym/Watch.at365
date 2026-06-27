@@ -38,7 +38,7 @@ namespace at365.Shell
             if (!string.IsNullOrEmpty(exePath))
             {
                 System.Diagnostics.Process.Start(exePath);
-                Application.Current.Shutdown();
+                System.Windows.Application.Current.Shutdown();
             }
         }
 
