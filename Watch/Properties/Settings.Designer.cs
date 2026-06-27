@@ -58,5 +58,17 @@ namespace at365.Shell.Properties {
                 this["Visible"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AutoLockEnabled {
+            get {
+                return ((bool)(this["AutoLockEnabled"]));
+            }
+            set {
+                this["AutoLockEnabled"] = value;
+            }
+        }
     }
 }

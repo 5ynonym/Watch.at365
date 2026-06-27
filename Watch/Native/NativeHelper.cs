@@ -46,6 +46,28 @@ namespace at365.Native365
             PostMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, SC_MONITORPOWER_OFF);
         }
 
+        public static void LockWorkstation()
+        {
+            LockWorkStation();
+        }
+
+        /// <summary>
+        /// 直近のユーザー入力（マウス・キーボード）からの経過時間を返す。
+        /// </summary>
+        public static TimeSpan GetIdleTime()
+        {
+            var info = new LASTINPUTINFO
+            {
+                cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>(),
+            };
+            if (!GetLastInputInfo(ref info))
+            {
+                return TimeSpan.Zero;
+            }
+            var elapsedMs = unchecked((uint)Environment.TickCount - info.dwTime);
+            return TimeSpan.FromMilliseconds(elapsedMs);
+        }
+
         public static void Sleep()
         {
             Forms.Application.SetSuspendState(Forms.PowerState.Suspend, false, false);

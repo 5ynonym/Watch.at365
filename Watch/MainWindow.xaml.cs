@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+using at365.AutoLock365;
 using at365.Clipboard365;
 using at365.Common365;
 using at365.Gesture365;
@@ -31,6 +32,7 @@ namespace at365.Shell
         private ToolStripMenuItem? _alignmentTop;
         private ToolStripMenuItem? _alignmentBottom;
         private ToolStripMenuItem? _watchVisible;
+        private ToolStripMenuItem? _autoLockEnabled;
 
         public MainWindow()
         {
@@ -96,6 +98,7 @@ namespace at365.Shell
         {
             GestureModule.Start();
             ClipboardModule.Start();
+            AutoLockModule.Start();
         }
 
         private void InitializeNotifyIcon()
@@ -104,7 +107,8 @@ namespace at365.Shell
             {
                 Icon = _iconOn,
                 Visible = true,
-                Text = "Watch at365"
+                Text = "Watch at365",
+                ContextMenuStrip = BuildContextMenu(),
             };
 
             _notifyIcon.MouseClick += (sender, e) =>
@@ -114,17 +118,9 @@ namespace at365.Shell
                     ToggleVisible();
                 }
             };
-
-            _notifyIcon.MouseUp += (sender, e) =>
-            {
-                if (e.Button == MouseButtons.Right)
-                {
-                    ShowContextMenu();
-                }
-            };
         }
 
-        private void ShowContextMenu()
+        private ContextMenuStrip BuildContextMenu()
         {
             var contextMenu = new ContextMenuStrip();
 
@@ -154,6 +150,9 @@ namespace at365.Shell
             var displayOffMenu = new ToolStripMenuItem("Turn off Display", null, (s, e) => HandleMenuDisplayOffClick(s, null));
             contextMenu.Items.Add(displayOffMenu);
 
+            _autoLockEnabled = new ToolStripMenuItem("Auto Lock (6h)", null, (s, e) => ToggleAutoLock());
+            contextMenu.Items.Add(_autoLockEnabled);
+
             contextMenu.Items.Add(new ToolStripSeparator());
 
             var exitMenu = new ToolStripMenuItem("Exit", null, (s, e) => HandleMenuExitClick(s, null));
@@ -161,8 +160,7 @@ namespace at365.Shell
 
             contextMenu.Opening += (s, e) => UpdateMenuState();
 
-            var pt = Control.MousePosition;
-            contextMenu.Show(new System.Drawing.Point(pt.X, pt.Y));
+            return contextMenu;
         }
 
         private void InitializeDisplayChangeNotification()
@@ -254,6 +252,14 @@ namespace at365.Shell
             var alignment = settings.Alignment;
             if (_alignmentTop != null) _alignmentTop.Checked = alignment == (int)VerticalAlignment.Top;
             if (_alignmentBottom != null) _alignmentBottom.Checked = alignment == (int)VerticalAlignment.Bottom;
+
+            if (_autoLockEnabled != null) _autoLockEnabled.Checked = AutoLockModule.Instance.Enabled;
+        }
+
+        private static void ToggleAutoLock()
+        {
+            var module = AutoLockModule.Instance;
+            module.Enabled = !module.Enabled;
         }
 
         private void SetMonitor(int monitor)
