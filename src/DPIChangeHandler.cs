@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Interop;
 
-namespace at365.Shell
+namespace at365.Watch
 {
     public class DpiChangeHandler : IDisposable
     {

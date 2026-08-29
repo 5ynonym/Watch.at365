@@ -1,15 +1,7 @@
-﻿using System;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using System.Windows;
-using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media.Imaging;
 using at365.AutoLock365;
 using at365.Clipboard365;
 using at365.Common365;
@@ -17,7 +9,7 @@ using at365.Gesture365;
 using at365.Native365;
 using Key = System.Windows.Input.Key;
 
-namespace at365.Shell
+namespace at365.Watch
 {
     public partial class MainWindow : Window
     {
