@@ -1,8 +1,8 @@
 ﻿<Application
-    x:Class="at365.App"
+    x:Class="at365.Watch.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:at365"
+    xmlns:local="clr-namespace:at365.Watch"
     StartupUri="MainWindow.xaml">
     <Application.Resources />
 </Application>

@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using at365.Common365;
 using at365.Native365;
+using UserSettings = at365.Watch.Properties.Settings;
 using static at365.Native365.NativeMethods;
 
 namespace at365.AutoLock365
@@ -50,15 +51,15 @@ namespace at365.AutoLock365
             {
                 if (_enabled == value) return;
                 _enabled = value;
-                at365.Shell.Properties.Settings.Default.AutoLockEnabled = value;
-                at365.Shell.Properties.Settings.Default.Save();
+                UserSettings.Default.AutoLockEnabled = value;
+                UserSettings.Default.Save();
                 ResetLastInput();
             }
         }
 
         protected override void InitializeCore()
         {
-            _enabled = at365.Shell.Properties.Settings.Default.AutoLockEnabled;
+            _enabled = UserSettings.Default.AutoLockEnabled;
             ResetLastInput();
             SetHook();
             _timer = new System.Threading.Timer(OnTick, null, CheckInterval, CheckInterval);
