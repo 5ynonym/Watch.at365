@@ -1,14 +1,15 @@
-﻿using System;
+using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Interop;
 
 namespace at365.Shell
 {
-    public class DpiChangeHandler : IDisposable
+    public sealed class DpiChangeHandler : IDisposable
     {
         private const int WM_DPICHANGED = 0x02E0;
         private readonly Window _window;
-        private HwndSource _hwndSource;
+        private HwndSource? _hwndSource;
         private bool _disposed;
 
         public DpiChangeHandler(Window window)
@@ -20,41 +21,47 @@ namespace at365.Shell
         private void Initialize()
         {
             _hwndSource = HwndSource.FromHwnd(new WindowInteropHelper(_window).Handle);
-            _hwndSource.AddHook(WndProc);
+            _hwndSource?.AddHook(WndProc);
         }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (msg == WM_DPICHANGED)
             {
-                OnDpiChanged();
+                RestartApplication();
+                handled = true;
             }
+
             return IntPtr.Zero;
         }
 
-        private static void OnDpiChanged()
+        private static void RestartApplication()
         {
-            var exePath = AppDomain.CurrentDomain.BaseDirectory + AppDomain.CurrentDomain.FriendlyName;
-            if (!string.IsNullOrEmpty(exePath))
+            try
             {
-                System.Diagnostics.Process.Start(exePath);
-                System.Windows.Application.Current.Shutdown();
+                var exePath = Process.GetCurrentProcess().MainModule?.FileName;
+                if (!string.IsNullOrEmpty(exePath))
+                {
+                    Process.Start(exePath);
+                    System.Windows.Application.Current?.Shutdown();
+                }
+            }
+            catch
+            {
             }
         }
 
         public void Dispose()
         {
-            if (!_disposed)
+            if (_disposed)
             {
-                if (_hwndSource != null)
-                {
-                    _hwndSource.RemoveHook(WndProc);
-                    _hwndSource.Dispose();
-                    _hwndSource = null;
-                }
-                _disposed = true;
+                return;
             }
+
+            _hwndSource?.RemoveHook(WndProc);
+            _hwndSource?.Dispose();
+            _hwndSource = null;
+            _disposed = true;
         }
     }
 }
-
