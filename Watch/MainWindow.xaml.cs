@@ -24,6 +24,7 @@ namespace at365.Shell
         private readonly Icon _iconOn;
         private readonly Icon _iconOff;
         private readonly Watch365.Watch _watch = new();
+        private DpiChangeHandler? _dpiChangeHandler;
         private NotifyIcon? _notifyIcon;
         private ToolStripMenuItem? _monitor0;
         private ToolStripMenuItem? _monitor1;
@@ -85,6 +86,7 @@ namespace at365.Shell
         protected override void OnClosed(EventArgs e)
         {
             try { HotKeyManager.Instance.UnregisterAllHotKeys(); } catch { }
+            try { _dpiChangeHandler?.Dispose(); } catch { }
             try { _watch.Close(); } catch { }
             try { _notifyIcon?.Dispose(); } catch { }
             try { ModuleBase.DisposeAll(); } catch { }
@@ -235,6 +237,7 @@ namespace at365.Shell
             };
 
             _watch.Show();
+            _dpiChangeHandler = new DpiChangeHandler(_watch);
             _watch.SetVisible(Properties.Settings.Default.Visible);
         }
 
