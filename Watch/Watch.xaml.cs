@@ -1,9 +1,11 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 using at365.Native365;
-using at365.Watch.Properties;
+using Forms = System.Windows.Forms;
 
 namespace at365.Watch365
 {
@@ -85,13 +87,13 @@ namespace at365.Watch365
         {
             NativeHelper.SetupOverlayWindowStyle(this);
 
-            var settings = Settings.Default;
+            var settings = Shell.Properties.Settings.Default;
             var alignment = (VerticalAlignment)settings.Alignment;
             textBlockLeft.VerticalAlignment = alignment;
             textBlockSecond.VerticalAlignment = alignment;
             textBlockRight.VerticalAlignment = alignment;
 
-            var screens = Screen.AllScreens
+            var screens = Forms.Screen.AllScreens
                 .OrderBy(each => each.Primary ? 0 : 1)
                 .ThenBy(each => (each.WorkingArea.Left, each.WorkingArea.Top))
                 .ToArray();

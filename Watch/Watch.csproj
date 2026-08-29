@@ -7,7 +7,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>at365.Watch</RootNamespace>
+    <RootNamespace>at365.Shell</RootNamespace>
+    <StartupObject>at365.App</StartupObject>
     <Copyright>at365</Copyright>
     <ApplicationIcon>Resources\Watch.ico</ApplicationIcon>
     <Platforms>AnyCPU;x64</Platforms>
@@ -53,13 +54,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="src\App.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Update="src\MainWindow.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Update="src\Watch.xaml">
+    <Page Update="Watch.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
