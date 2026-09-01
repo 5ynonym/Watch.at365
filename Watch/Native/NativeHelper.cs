@@ -32,6 +32,36 @@ namespace at365.Native365
             catch { }
         }
 
+        public static void SetWindowState(IntPtr handle, int cmd)
+        {
+            ShowWindowAsync(handle, cmd);
+            if (cmd == 1 || cmd == 3 || cmd == 9)
+            {
+                SetForegroundWindow(handle);
+            }
+        }
+
+        public static void ToggleMinimize(string processName)
+        {
+            var procs = Process.GetProcessesByName(processName);
+            foreach (Process p in procs)
+            {
+                if (IsIconic(p.MainWindowHandle))
+                {
+                    SetWindowState(p.MainWindowHandle, 9); // SW_RESTORE
+                }
+                else
+                {
+                    SetWindowState(p.MainWindowHandle, 6); // SW_MINIMIZE
+                }
+            }
+        }
+
+        public static void SwitchRDPMinimize()
+        {
+            ToggleMinimize("mstsc");
+        }
+
         public static void SetupOverlayWindowStyle(Window window)
         {
             var handle = new WindowInteropHelper(window).Handle;

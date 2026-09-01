@@ -30,26 +30,20 @@ namespace at365.Gesture365
             var whenver = HotKeyManager.When();
             whenver(ALL_MOD, Key.M, NativeHelper.MoveCursor, null);
 
-            
+            whenver(NONE, Key.F13, SendKeyActions.OpenExplorer, NativeHelper.OpenCurrentProcessFolder); // F1
+            //whenver(NONE, Key.F14, MouseGestureProvider.Actions.ToggleProcessBlackList, null);
+            //whenver(NONE , Key.F14, NativeHelper.CopyPointedWindowProcessName, null);
 
-            whenver(ALT_WIN, Key.F1, NativeHelper.OpenCurrentProcessFolder, null);
-            whenver(NONE, Key.F13, NativeHelper.OpenCurrentProcessFolder, null);
-
-            whenver(ALT_WIN, Key.F2, MouseGestureProvider.Actions.ToggleProcessBlackList, null);
-            whenver(NONE, Key.F14, MouseGestureProvider.Actions.ToggleProcessBlackList, null);
-            //whenver(none , Key.F14, NativeHelper.CopyPointedWindowProcessName, null);
-
-            whenver(ALT_WIN, Key.F4, NativeHelper.SwitchRDPToConsole, null);
-            whenver(NONE, Key.F16, NativeHelper.SwitchRDPToConsole, null);
+            // キー割り当てだとRDP側にフォーカスがある場合にRDP元で動かないのでマウスマクロで実行する必要がある
+            //whenver(NONE, Key.F15, NativeHelper.SwitchRDPMinimize, null); // F3
+            whenver(NONE, Key.F16, NativeHelper.SwitchRDPToConsole, null); // F4
 
             // XButton1 (マウス側で最小化を割り当てるとリモートデスクトップを貫通しない)
-            whenver(NONE, Key.F17, NativeHelper.MinimizeWindow, null);
-
+            whenver(NONE, Key.F17, NativeHelper.MinimizeWindow, null); // F5
             // XButton2 マウス側でAlt+F4を割り当てる (Alt+F4はリモートデスクトップを貫通する)
-            whenver(NONE, Key.F18, SendKeyActions.Alt_F4, null);
+            whenver(NONE, Key.F18, SendKeyActions.Alt_F4, null); // F6
 
-            // ホイールクリック用
-            whenver(NONE, Key.F20, SendKeyActions.OpenExplorer, NativeHelper.AdjustFullHeight);
+            whenver(NONE, Key.F20, SendKeyActions.OpenExplorer, NativeHelper.AdjustFullHeight); // F8
 
             // F21は変なWindows機能に割り当てられるので使用不可
             // F22はゲーミングコパイロットに割り当てられるので使用不可
@@ -57,11 +51,11 @@ namespace at365.Gesture365
 
             // 左チルト
             whenver(ALT_WIN, Key.F11, NativeHelper.MoveWindowToLeft, SendKeyActions.WindowSnap.Left);
-            whenver(NONE, Key.F23, NativeHelper.MoveWindowToLeft, SendKeyActions.WindowSnap.Left);
+            whenver(NONE, Key.F23, NativeHelper.MoveWindowToLeft, SendKeyActions.WindowSnap.Left); // F11
 
             // 右チルト
             whenver(ALT_WIN, Key.F12, NativeHelper.MoveWindowToRight, SendKeyActions.WindowSnap.Right);
-            whenver(NONE, Key.F24, NativeHelper.MoveWindowToRight, SendKeyActions.WindowSnap.Right);
+            whenver(NONE, Key.F24, NativeHelper.MoveWindowToRight, SendKeyActions.WindowSnap.Right); // F12
         }
 
         private void InitializeButtonGesture()
