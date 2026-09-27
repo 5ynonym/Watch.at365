@@ -1,8 +1,19 @@
 @echo off
-setlocal
+setlocal DisableDelayedExpansion
 
 set "SOURCE=%~dp0publish\Watch.at365.exe"
-set "TARGET_DIR=%~dp0..\..\00.ESSENTIAL\00.MainTools\Watch.at365"
+set "TARGET_DIR="
+if not "%~1"=="" (
+    set "TARGET_DIR=%~f1"
+    goto target_ready
+)
+if exist "%~dp0deploy.local.txt" set /p "TARGET_DIR="<"%~dp0deploy.local.txt"
+if not defined TARGET_DIR (
+    echo Specify a destination argument or put its absolute path in deploy.local.txt.
+    exit /b 1
+)
+
+:target_ready
 set "TARGET=%TARGET_DIR%\Watch.at365.exe"
 
 if not exist "%SOURCE%" (
