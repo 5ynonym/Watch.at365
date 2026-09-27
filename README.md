@@ -103,3 +103,18 @@
 - RDP（リモートデスクトップ）固有機能はRDPコンソールアクセスが必要です
 - UAC保護ウィンドウ等ではマウスジェスチャが動作しない場合があります
 - ジェスチャ検出は20ms間隔でスロットリングしています
+
+## 発行と配置
+
+.NET 10 SDK を使用して、リポジトリのルートで実行します。
+
+```powershell
+.\publish.bat
+.\deploy.bat "C:\Tools\Watch.at365"
+```
+
+[publish.bat](publish.bat) は Release・win-x64 の単一実行ファイルを `publish\Watch.at365.exe` に生成します。実行先には .NET 10 Desktop Runtime（x64）が必要です。追加の dotnet オプションも渡せますが、出力先や単一ファイル設定を変更した場合は配置方法も調整してください。
+
+[deploy.bat](deploy.bat) の配置先は引数が優先されます。引数なしで使う場合は、[deploy.local.txt.example](deploy.local.txt.example) を `deploy.local.txt` にコピーし、1行目に配置先の絶対パスを引用符なしで記入してください。このローカル設定は Git 管理対象外です。
+
+配置先フォルダーは事前に作成し、実行中のアプリを終了してから配置してください。バッチは EXE を上書きします。アプリの強制終了や自動起動は行いません。

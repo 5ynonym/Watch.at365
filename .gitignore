@@ -363,3 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 /Shell/Hatten.ttf
 .github/copilot-instructions.md
+
+# Local deployment destination
+/deploy.local.txt
