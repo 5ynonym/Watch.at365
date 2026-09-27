@@ -18,7 +18,7 @@
     Title="at365.Watch">
     <Window.Resources>
         <Style x:Key="{x:Type TextBlock}" TargetType="{x:Type TextBlock}">
-            <Setter Property="FontFamily" Value="Haettenschweiler" />
+            <Setter Property="FontFamily" Value="pack://application:,,,/Watch.at365;component/#Haettenschweiler" />
             <Setter Property="FontWeight" Value="Black" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="White" />
