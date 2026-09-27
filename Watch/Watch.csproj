@@ -29,12 +29,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Hatten.ttf" />
     <None Remove="Resources\Off.ico" />
     <None Remove="Resources\On.ico" />
     <None Remove="Resources\Watch.ico" />
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Hatten.ttf" />
     <Resource Include="Resources\Off.ico" />
     <Resource Include="Resources\On.ico" />
     <Resource Include="Resources\Watch.ico" />
