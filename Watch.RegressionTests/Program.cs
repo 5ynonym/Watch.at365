@@ -4,6 +4,7 @@ using at365.Clipboard365;
 using at365.Common365;
 using at365.Gesture365;
 using at365.Native365;
+using System.IO;
 
 internal static class Program
 {
@@ -24,6 +25,12 @@ internal static class Program
             ("Unknown long movement keeps directions until release", LongMovement),
             ("Keyboard chord is one ordered batch with extended flags", KeyboardBatch),
             ("Clock refreshes at second zero and across hidden intervals", ClockRefresh),
+            ("JSON settings round-trip every persisted option", SettingsRoundTrip),
+            ("Existing JSON takes priority and missing properties use defaults", SettingsDefaults),
+            ("Legacy settings migrate only when JSON is absent", SettingsMigration),
+            ("Legacy reader still exposes all four typed settings", LegacySettingsReader),
+            ("Broken JSON is backed up before using defaults", SettingsCorruption),
+            ("Failed save preserves the previous JSON", SettingsSaveFailure),
         ];
         var failures = 0;
         foreach (var (name, run) in tests)
@@ -211,6 +218,91 @@ internal static class Program
         }
         finally { tracker.Close(); }
     }
+
+    private static void WithSettingsFile(Action<string> test)
+    {
+        var root = Path.GetFullPath(AppContext.BaseDirectory);
+        var directory = Path.GetFullPath(Path.Combine(root, "config-tests-" + Guid.NewGuid().ToString("N")));
+        Assert(directory.StartsWith(root, StringComparison.OrdinalIgnoreCase), "Test path escaped output directory.");
+        Directory.CreateDirectory(directory);
+        try { test(Path.Combine(directory, "nested", "config.json")); }
+        finally { Directory.Delete(directory, recursive: true); }
+    }
+
+    private static ConfigurationStore TestStore(string path) => new(path, (_, _) => { });
+
+    private static void SettingsRoundTrip() => WithSettingsFile(path =>
+    {
+        var store = TestStore(path);
+        var initial = store.Load();
+        Assert(File.Exists(path) && initial.Visible && !initial.AutoLockEnabled && initial.Monitor == 0 && initial.Alignment == 0, "Initial config/defaults missing.");
+        initial.Monitor = 2;
+        initial.Alignment = 2;
+        initial.Visible = false;
+        initial.AutoLockEnabled = true;
+        initial.Blacklist = ["Example.EXE", "example.exe", " another.exe "];
+        Assert(store.Save(initial), "Save failed.");
+        var loaded = TestStore(path).Load();
+        Assert(loaded.Monitor == 2 && loaded.Alignment == 2 && !loaded.Visible && loaded.AutoLockEnabled, "Settings did not survive reload.");
+        Assert(loaded.Blacklist.SequenceEqual(new[] { "example.exe", "another.exe" }), "Blacklist did not survive normalization/reload.");
+        Assert(Directory.GetFiles(Path.GetDirectoryName(path)!).Length == 1, "Temporary file was left behind.");
+    });
+
+    private static void SettingsDefaults() => WithSettingsFile(path =>
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, "{\"Monitor\":-5,\"Alignment\":999,\"Blacklist\":null,\"Visible\":false}");
+        var loaded = TestStore(path).Load(() => throw new InvalidOperationException("Legacy must not override JSON."));
+        Assert(!loaded.Visible && !loaded.AutoLockEnabled && loaded.Monitor == 0 && loaded.Alignment == 0 && loaded.Blacklist.Length == 0, "Missing/invalid property defaults are incorrect.");
+    });
+
+    private static void SettingsMigration() => WithSettingsFile(path =>
+    {
+        var imports = 0;
+        var loaded = TestStore(path).Load(() =>
+        {
+            imports++;
+            return new ApplicationConfiguration { Monitor = 3, Alignment = 2, Visible = false, AutoLockEnabled = true, Blacklist = ["legacy.exe"] };
+        });
+        var restored = TestStore(path).Load(() => { imports++; return new(); });
+        Assert(imports == 1 && File.Exists(path), "Migration must run once and persist JSON.");
+        Assert(restored.Monitor == loaded.Monitor && restored.Alignment == 2 && !restored.Visible && restored.AutoLockEnabled && restored.Blacklist.Single() == "legacy.exe", "Migrated settings were lost.");
+    });
+
+    private static void LegacySettingsReader()
+    {
+        var legacy = new at365.Shell.Properties.Settings();
+        Assert(legacy.Properties.Count == 4, "Legacy settings metadata changed.");
+        _ = legacy.Monitor;
+        _ = legacy.Alignment;
+        _ = legacy.Visible;
+        _ = legacy.AutoLockEnabled;
+    }
+
+    private static void SettingsCorruption() => WithSettingsFile(path =>
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        const string broken = "{\"Visible\":";
+        File.WriteAllText(path, broken);
+        var store = TestStore(path);
+        var loaded = store.Load(() => throw new InvalidOperationException("Broken JSON is not a migration trigger."));
+        Assert(loaded.Visible && !loaded.AutoLockEnabled, "Broken config did not fall back safely.");
+        var backup = Directory.GetFiles(Path.GetDirectoryName(path)!, "config.json.invalid-*").Single();
+        Assert(File.ReadAllText(backup) == broken && File.ReadAllText(path) == broken, "Broken input was not preserved.");
+        Assert(store.Save(loaded) && TestStore(path).Load().Visible, "Could not save valid settings after recovery.");
+    });
+
+    private static void SettingsSaveFailure() => WithSettingsFile(path =>
+    {
+        var store = TestStore(path);
+        var loaded = store.Load();
+        var original = File.ReadAllText(path);
+        loaded.Visible = false;
+        using (var locked = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None))
+            Assert(!store.Save(loaded), "Saving over a locked file should fail.");
+        Assert(File.ReadAllText(path) == original, "Failed save corrupted the previous config.");
+        Assert(Directory.GetFiles(Path.GetDirectoryName(path)!).Length == 1, "Failed save left a temporary file.");
+    });
 
     private static void PumpFor(TimeSpan duration)
     {

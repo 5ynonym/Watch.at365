@@ -87,7 +87,7 @@ namespace at365.Watch365
         {
             NativeHelper.SetupOverlayWindowStyle(this);
 
-            var settings = Shell.Properties.Settings.Default;
+            var settings = Common365.ApplicationSettings.Current;
             var alignment = settings.Alignment == (int)VerticalAlignment.Bottom
                 ? VerticalAlignment.Bottom : VerticalAlignment.Top;
             textBlockLeft.VerticalAlignment = alignment;
