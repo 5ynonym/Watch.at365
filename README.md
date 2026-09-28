@@ -122,7 +122,7 @@ dotnet run --project .\Watch\Watch.csproj
 
 `Auto Lock (6h)` を有効にすると、マウスの移動・クリック・ホイール操作がない時間を計測し、6 時間以上になった時点で Windows をロックします。確認間隔は 1 分です。**キーボード入力は計測対象に含まれません。** 起動時と有効・無効の切り替え時には計測をリセットします。
 
-以下の設定はユーザー設定として保存され、次回起動時にも使用されます。
+以下の設定は `%APPDATA%\at365\Watch\config.json` に保存され、次回起動時にも使用されます。フォルダーとファイルは初回起動時に作成され、トレイメニューで変更した時点で保存されます。
 
 | 設定         | 初期値       |
 | ------------ | ------------ |
@@ -131,11 +131,23 @@ dotnet run --project .\Watch\Watch.csproj
 | 時計の表示   | 表示         |
 | 自動ロック   | 無効         |
 
-ジェスチャーの除外対象を追加するには、アプリケーションのベースディレクトリ（通常は EXE と同じフォルダー）に `blacklist.json` を作成し、小文字の実行ファイル名を JSON 配列で指定します。起動時に読み込むため、変更後はアプリを再起動してください。
+ジェスチャーの除外対象も同じファイルの `Blacklist` に保存します。設定ファイルの例は以下のとおりです。`Alignment` は `0` が上端、`2` が下端です。
 
 ```json
-["example.exe", "another-app.exe"]
+{
+  "Monitor": 0,
+  "Alignment": 0,
+  "Visible": true,
+  "AutoLockEnabled": false,
+  "Blacklist": ["example.exe", "another-app.exe"]
+}
 ```
+
+手動編集する場合はアプリを終了してから変更し、再起動してください。`Blacklist` は実行ファイル名を指定し、大文字・小文字は区別しません。
+
+`config.json` がない場合だけ、従来のユーザー設定と EXE と同じフォルダーの `blacklist.json` を読み込んで移行します。旧ファイルは変更せず、以後の保存・復元には `config.json` を使います。移行元がなければ上記の初期値（`Blacklist` は空配列）で開始します。
+
+JSONが壊れている場合は `config.json.invalid-...` に退避コピーを試み、初期値で起動します。読み込みに失敗した元ファイルはその時点では上書きしません。保存は一時ファイルを書き終えてから置き換える方式で、失敗は診断ログに記録します。
 
 ブラックリスト切り替え処理はありますが、現在は呼び出し用のホットキーが登録されていません。キー・ジェスチャーの割り当て変更は [GestureModule.cs](Watch/Gesture/GestureModule.cs)、時計の見た目の変更は [Watch.xaml](Watch/Watch.xaml) を編集して再ビルドします。
 
@@ -190,4 +202,4 @@ dotnet run --project .\Watch.RegressionTests\Watch.RegressionTests.csproj
 | [Watch/AutoLock/AutoLockModule.cs](Watch/AutoLock/AutoLockModule.cs)     | マウス無操作時間の計測とロック                             |
 | [Watch/Native/](Watch/Native/)                                           | Windows API 定義、ウィンドウ・プロセス操作                 |
 | [Watch/Common/](Watch/Common/)                                           | モジュール管理、JSON 設定、実行間隔の制御                  |
-| [Watch/Properties/Settings.settings](Watch/Properties/Settings.settings) | ユーザー設定の定義・初期値                                 |
+| [Watch/Common/ApplicationSettings.cs](Watch/Common/ApplicationSettings.cs) | JSON 設定の定義・初期値・保存復元                         |

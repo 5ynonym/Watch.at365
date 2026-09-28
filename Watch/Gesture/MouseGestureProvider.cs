@@ -280,7 +280,7 @@ namespace at365.Gesture365
 
         private void LoadConfig()
         {
-            _processBlackList = new HashSet<string>(Settings.Load<string[]>("blacklist.json", [])
+            _processBlackList = new HashSet<string>(ApplicationSettings.Current.Blacklist
                 .Where(name => !string.IsNullOrWhiteSpace(name)), StringComparer.OrdinalIgnoreCase);
         }
 
@@ -295,7 +295,8 @@ namespace at365.Gesture365
                 _processBlackList.Add(processName);
             }
 
-            Settings.Save("blacklist.json", _processBlackList.ToArray());
+            ApplicationSettings.Current.Blacklist = _processBlackList.ToArray();
+            ApplicationSettings.Save();
         }
     }
 }

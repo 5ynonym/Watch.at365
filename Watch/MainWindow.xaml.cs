@@ -65,6 +65,7 @@ namespace at365.Shell
             try
             {
                 PreventMultipleInstances();
+                ApplicationSettings.Initialize();
 
                 base.OnSourceInitialized(e);
                 NativeHelper.SetupOverlayWindowStyle(this);
@@ -226,12 +227,12 @@ namespace at365.Shell
 
             _watch.Show();
             _dpiChangeHandler = new DpiChangeHandler(_watch);
-            _watch.SetVisible(Properties.Settings.Default.Visible);
+            _watch.SetVisible(ApplicationSettings.Current.Visible);
         }
 
         private void UpdateMenuState()
         {
-            var settings = Properties.Settings.Default;
+            var settings = ApplicationSettings.Current;
             var monitor = settings.Monitor;
             if (_monitor0 != null) _monitor0.Checked = monitor == 0;
             if (_monitor1 != null) _monitor1.Checked = monitor == 1;
@@ -255,18 +256,18 @@ namespace at365.Shell
 
         private void SetMonitor(int monitor)
         {
-            var settings = Properties.Settings.Default;
+            var settings = ApplicationSettings.Current;
             settings.Monitor = monitor;
-            settings.Save();
+            ApplicationSettings.Save();
 
             _watch.Refresh();
         }
 
         private void SetAlignment(VerticalAlignment alignment)
         {
-            var settings = Properties.Settings.Default;
+            var settings = ApplicationSettings.Current;
             settings.Alignment = (int)alignment;
-            settings.Save();
+            ApplicationSettings.Save();
 
             _watch.Refresh();
         }
@@ -274,9 +275,9 @@ namespace at365.Shell
         private void ToggleVisible()
         {
             var newVisible = !_watch.IsVisible;
-            var settings = Properties.Settings.Default;
+            var settings = ApplicationSettings.Current;
             settings.Visible = newVisible;
-            settings.Save();
+            ApplicationSettings.Save();
 
             _watch.SetVisible(newVisible);
         }

@@ -41,15 +41,15 @@ public sealed class AutoLockModule : ModuleBase<AutoLockModule>
             try
             {
                 SetMonitoring(value);
-                at365.Shell.Properties.Settings.Default.AutoLockEnabled = value;
-                at365.Shell.Properties.Settings.Default.Save();
+                ApplicationSettings.Current.AutoLockEnabled = value;
+                ApplicationSettings.Save();
             }
             catch (Exception error) { Diagnostics.Report("Set auto lock", error); }
         }
     }
 
     protected override void InitializeCore() =>
-        SetMonitoring(at365.Shell.Properties.Settings.Default.AutoLockEnabled);
+        SetMonitoring(ApplicationSettings.Current.AutoLockEnabled);
 
     private void SetMonitoring(bool enabled)
     {

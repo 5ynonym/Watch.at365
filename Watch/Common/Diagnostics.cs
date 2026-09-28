@@ -18,7 +18,7 @@ internal static class Diagnostics
         {
             lock (Sync)
             {
-                var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "at365", "Watch");
+                var directory = ApplicationSettings.DirectoryPath;
                 Directory.CreateDirectory(directory);
                 var path = Path.Combine(directory, "errors.log");
                 if (File.Exists(path) && new FileInfo(path).Length > 1_048_576)
