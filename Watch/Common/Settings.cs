@@ -15,10 +15,16 @@ namespace at365.Common365
         public static T Load<T>(string fileName, T fallback) where T : class
         {
             var filePath = GetFilePath(fileName);
-            if (!File.Exists(filePath)) return fallback;
-
-            return JsonSerializer.Deserialize<T>(File.ReadAllText(filePath))
-                ?? fallback;
+            try
+            {
+                if (!File.Exists(filePath)) return fallback;
+                return JsonSerializer.Deserialize<T>(File.ReadAllText(filePath)) ?? fallback;
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
+            {
+                Diagnostics.Report("Load JSON settings", error);
+                return fallback;
+            }
         }
 
         private static string GetFilePath(string fileName)

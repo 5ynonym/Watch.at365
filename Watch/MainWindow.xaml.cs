@@ -34,6 +34,7 @@ namespace at365.Shell
         private ToolStripMenuItem? _alignmentBottom;
         private ToolStripMenuItem? _watchVisible;
         private ToolStripMenuItem? _autoLockEnabled;
+        private HwndSource? _messageSource;
 
         public MainWindow()
         {
@@ -50,11 +51,13 @@ namespace at365.Shell
                 var streamResourceInfo = System.Windows.Application.GetResourceStream(new Uri(resourceUri));
                 if (streamResourceInfo?.Stream != null)
                 {
-                    return new Icon(streamResourceInfo.Stream);
+                    using var stream = streamResourceInfo.Stream;
+                    using var icon = new Icon(stream);
+                    return (Icon)icon.Clone();
                 }
             }
             catch { }
-            return SystemIcons.Application;
+            return (Icon)SystemIcons.Application.Clone();
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -76,18 +79,21 @@ namespace at365.Shell
                 InitializeHotkeys();
                 InitializeModules();
             }
-            catch
+            catch (Exception error)
             {
-                // 重複起動で例外になるので終了しておく
+                Diagnostics.Report("Startup", error);
                 Close();
             }
         }
 
         protected override void OnClosed(EventArgs e)
         {
+            _messageSource?.RemoveHook(WndProc);
+            _messageSource = null;
             try { HotKeyManager.Instance.UnregisterAllHotKeys(); } catch { }
             try { _dpiChangeHandler?.Dispose(); } catch { }
             try { _watch.Close(); } catch { }
+            try { _notifyIcon?.ContextMenuStrip?.Dispose(); } catch { }
             try { _notifyIcon?.Dispose(); } catch { }
             try { ModuleBase.DisposeAll(); } catch { }
             try { _iconOn?.Dispose(); } catch { }
@@ -149,7 +155,7 @@ namespace at365.Shell
             _watchVisible = new ToolStripMenuItem("Toggle Watch", null, (s, e) => ToggleVisible());
             contextMenu.Items.Add(_watchVisible);
 
-            var displayOffMenu = new ToolStripMenuItem("Turn off Display", null, (s, e) => HandleMenuDisplayOffClick(s, null));
+            var displayOffMenu = new ToolStripMenuItem("Turn off Display", null, (s, e) => NativeHelper.TurnOffDisplay());
             contextMenu.Items.Add(displayOffMenu);
 
             _autoLockEnabled = new ToolStripMenuItem("Auto Lock (6h)", null, (s, e) => ToggleAutoLock());
@@ -157,7 +163,7 @@ namespace at365.Shell
 
             contextMenu.Items.Add(new ToolStripSeparator());
 
-            var exitMenu = new ToolStripMenuItem("Exit", null, (s, e) => HandleMenuExitClick(s, null));
+            var exitMenu = new ToolStripMenuItem("Exit", null, (s, e) => System.Windows.Application.Current?.Shutdown());
             contextMenu.Items.Add(exitMenu);
 
             contextMenu.Opening += (s, e) => UpdateMenuState();
@@ -167,15 +173,15 @@ namespace at365.Shell
 
         private void InitializeDisplayChangeNotification()
         {
-            var source = HwndSource.FromHwnd(new System.Windows.Interop.WindowInteropHelper(this).Handle);
-            source?.AddHook(WndProc);
+            _messageSource = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+            _messageSource?.AddHook(WndProc);
         }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (msg == (int)NativeMethods.WM_DISPLAYCHANGE)
             {
-                RestartApplication();
+                ApplicationLifetime.RequestRestart();
                 handled = true;
             }
             else if (msg == (int)NativeMethods.WM_HOTKEY)
@@ -190,31 +196,13 @@ namespace at365.Shell
             return IntPtr.Zero;
         }
 
-        private static void RestartApplication()
-        {
-            try
-            {
-                var currentProcess = Process.GetCurrentProcess();
-                var exePath = currentProcess.MainModule?.FileName;
-
-                if (exePath != null)
-                {
-                    Process.Start(exePath);
-                    System.Windows.Application.Current?.Shutdown();
-                }
-            }
-            catch
-            {
-            }
-        }
-
         private void InitializeHotkeys()
         {
             var whenever = HotKeyManager.When();
             whenever(ModifierKeys.None, Key.Pause, ToggleVisible, null);
-            whenever(ModifierKeys.Shift, Key.Pause, void () => Task.Run(() =>
+            whenever(ModifierKeys.Shift, Key.Pause, void () => Task.Run(async () =>
             {
-                Thread.Sleep(1000);
+                await Task.Delay(1000);
                 NativeHelper.TurnOffDisplay();
             }), null);
         }
@@ -296,18 +284,19 @@ namespace at365.Shell
         private static void PreventMultipleInstances()
         {
             using var currentProcess = Process.GetCurrentProcess();
-            var existingProcesses = Process.GetProcessesByName(currentProcess.ProcessName)
-                .Where(p => p.Id != currentProcess.Id);
+            var existingProcesses = Process.GetProcessesByName(currentProcess.ProcessName);
             foreach (var process in existingProcesses)
             {
                 try
                 {
+                    if (process.Id == currentProcess.Id) continue;
                     process.Kill();
                     process.WaitForExit();
 
                 }
-                catch
+                catch (Exception error)
                 {
+                    Diagnostics.Report("Replace existing instance", error);
                 }
                 finally
                 {
@@ -316,7 +305,5 @@ namespace at365.Shell
             }
         }
 
-        private void HandleMenuDisplayOffClick(object sender, RoutedEventArgs e) => NativeHelper.TurnOffDisplay();
-        private void HandleMenuExitClick(object sender, RoutedEventArgs e) => System.Windows.Application.Current?.Shutdown();
     }
 }

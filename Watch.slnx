@@ -6,4 +6,5 @@
   <Project Path="Watch/Watch.csproj">
     <Platform Solution="*|x64" Project="x64" />
   </Project>
+  <Project Path="Watch.RegressionTests/Watch.RegressionTests.csproj" />
 </Solution>

@@ -13,7 +13,7 @@ namespace at365.Gesture365
         private readonly MouseGestureProvider _gestureProvider;
         private readonly List<MoveTrigger> _triggers = new List<MoveTrigger>(100);
         private GestureButton _gestureButton;
-        private string? _process;
+        private string _process = string.Empty;
         private Point _checkPoint;
         private nint _hwnd;
 
@@ -36,19 +36,22 @@ namespace at365.Gesture365
 
         public void Start(GestureButton gestureButton, string process)
         {
+            Dispatcher.VerifyAccess();
             _gestureButton = gestureButton;
             _process = process;
             _checkPoint = Control.MousePosition;
             _triggers.Clear();
 
-            Dispatcher.Invoke(() => ReadyIndicator(_checkPoint, process));
+            ReadyIndicator(_checkPoint, process);
             _timer.Start();
         }
 
         public IEnumerable<MoveTrigger> End()
         {
+            Dispatcher.VerifyAccess();
+            if (_timer.IsEnabled && !_gestureProvider.IsHandled()) Check(Control.MousePosition);
             _timer.Stop();
-            Dispatcher.Invoke(() => HideIndicator());
+            HideIndicator();
 
             var result = _triggers.ToArray();
             _triggers.Clear();
@@ -56,7 +59,16 @@ namespace at365.Gesture365
             return result;
         }
 
-        private void Check()
+        protected override void OnClosed(EventArgs e)
+        {
+            _timer.Stop();
+            _triggers.Clear();
+            base.OnClosed(e);
+        }
+
+        private void Check() => Check(Control.MousePosition);
+
+        internal void Check(Point point)
         {
             if (_gestureProvider.IsHandled())
             {
@@ -65,7 +77,6 @@ namespace at365.Gesture365
                 return;
             }
 
-            var point = Control.MousePosition;
             var triggerCount = _triggers.Count;
             var first = triggerCount == 0;
             var trigger = GetMoveTrigger(_checkPoint, point, first);
@@ -79,18 +90,16 @@ namespace at365.Gesture365
 
             if (triggerCount >= 3)
             {
-                End();
+                // Keep directions until button-up so unknown gestures do not replay a click.
+                _timer.Stop();
+                HideIndicator();
             }
             else
             {
                 var (action, caption) = MouseGestureManager.Instance.GetAction(_gestureButton, _triggers, _process);
-                Dispatcher.Invoke(() =>
-                {
-                    UpdateIndicator(
-                        string.Join(string.Empty, _triggers.Select(each => _triggerMark[(int)each]).ToArray()),
-                        action != null ? caption ?? string.Empty : "アクション無し");
-
-                });
+                UpdateIndicator(
+                    string.Concat(_triggers.Select(each => _triggerMark[(int)each])),
+                    action != null ? caption ?? string.Empty : "アクション無し");
             }
         }
 
@@ -108,12 +117,13 @@ namespace at365.Gesture365
 
         private void ReadyIndicator(Point checkPoint, string process)
         {
-            NativeHelper.MoveWindowCentering(_hwnd, checkPoint.X, checkPoint.Y);
             _textProcessName.Text = process;
             _textBlockGesture.Text = string.Empty;
             _textBlockCaption.Text = string.Empty;
             SetVisibility(Visibility.Hidden);
             Show();
+            UpdateLayout();
+            NativeHelper.MoveWindowCentering(_hwnd, checkPoint.X, checkPoint.Y);
         }
 
         private void UpdateIndicator(string gesture, string caption)

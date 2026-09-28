@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
+using System.Windows.Threading;
+using System.ComponentModel;
 using at365.Common365;
 using at365.Native365;
 using static at365.Native365.NativeMethods;
@@ -21,24 +23,30 @@ namespace at365.Gesture365
         private readonly MouseHookCallback _callback;
         private readonly ThrottleDispatcher _actionThrottle = new(TimeSpan.FromMilliseconds(20));
         private readonly GestureMoveTracker _moveTracker;
+        private readonly Action<GestureButton> _replayClick;
 
         private nint _hHook = 0;
         private GestureButton _ready;
         private string _process = string.Empty;
         private bool _handled;
-        private bool _throughMode;
+        private bool _disposed;
+        private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
         private HashSet<string> _processBlackList = [];
 
-        private MouseGestureProvider()
+        private MouseGestureProvider() : this(ReplayClick) { }
+
+        internal MouseGestureProvider(Action<GestureButton> replayClick)
         {
+            _replayClick = replayClick;
             _callback = (int nCode, uint wParam, [In] MSLLHOOKSTRUCT lParam) =>
             {
                 try
                 {
                     return CallbackHook(nCode, wParam, lParam);
                 }
-                catch
+                catch (Exception error)
                 {
+                    Diagnostics.Report("Mouse hook", error);
                     return CallNextHookEx(_hHook, nCode, wParam, lParam);
                 }
             };
@@ -54,8 +62,12 @@ namespace at365.Gesture365
 
         public void Dispose()
         {
+            if (_disposed) return;
+            _disposed = true;
             try { Unhook(); } catch { }
             try { _actionThrottle.Dispose(); } catch { }
+            _moveTracker.Close();
+            _ready = GestureButton.None;
         }
 
         public bool IsReady(GestureButton button = GestureButton.All) => (_ready & button) > 0;
@@ -78,23 +90,28 @@ namespace at365.Gesture365
 
         private void SetHook()
         {
-            using var process = Process.GetCurrentProcess();
-            nint hInstance = GetModuleHandle(process.MainModule!.ModuleName);
+            nint hInstance = GetModuleHandle(null);
             _hHook = SetWindowsHookEx(WH_MOUSE_LL, _callback, hInstance, 0);
+            if (_hHook == nint.Zero) throw new Win32Exception(Marshal.GetLastWin32Error());
         }
 
         private void Unhook()
         {
             if (_hHook != nint.Zero)
             {
-                UnhookWindowsHookEx(_hHook);
+                if (!UnhookWindowsHookEx(_hHook))
+                {
+                    Diagnostics.Report("Unhook gestures", new Win32Exception(Marshal.GetLastWin32Error()));
+                    return;
+                }
                 _hHook = nint.Zero;
             }
         }
 
         private nint CallbackHook(int nCode, uint wParam, [In] MSLLHOOKSTRUCT lParam)
         {
-            if (nCode < 0 || _throughMode) return CallNextHookEx(_hHook, nCode, wParam, lParam);
+            if (nCode < 0 || _disposed || lParam.dwExtraInfo == (nuint)InputSimulator.InputMarker)
+                return CallNextHookEx(_hHook, nCode, wParam, lParam);
 
             if (!IsReady())
             {
@@ -144,61 +161,59 @@ namespace at365.Gesture365
             if (IsReady()) return false;
             if (IsIgnoreGesture(button)) return false;
 
-            ThreadPool.QueueUserWorkItem((_) =>
-            {
-                var targetWindow = WindowInfo.GetCurrentWindow();
-                _process = targetWindow.ExeName;
-                _handled = false;
-                _ready = button;
+            return BeginGesture(button, WindowInfo.GetCurrentWindow().ExeName);
+        }
 
-                if (button == GestureButton.Right && MouseGestureManager.Instance.HasMoveAction(_process))
-                {
-                    _moveTracker.Start(button, _process);
-                }
-            });
+        internal bool BeginGesture(GestureButton button, string process)
+        {
+            _dispatcher.VerifyAccess();
+            if (_disposed || IsReady()) return false;
+            // Hook callbacks, hotkeys and tracker ticks share the UI dispatcher.
+            // Publish state before returning so button-up cannot overtake button-down.
+            _process = process;
+            _handled = false;
+            _ready = button;
+            if (button == GestureButton.Right && MouseGestureManager.Instance.HasMoveAction(_process))
+                _moveTracker.Start(button, _process);
 
             return true;
         }
 
-        private bool EndGesture(GestureButton button)
+        internal bool EndGesture(GestureButton button)
         {
+            _dispatcher.VerifyAccess();
             if (!IsReady(button)) return false;
 
-            ThreadPool.QueueUserWorkItem((_) =>
+            try
             {
-                if (!_handled)
+                var moves = _moveTracker.End();
+                if (!_handled && !ExecuteAction(moves))
                 {
-                    try
+                    // Replay after returning from the hook; the marker prevents recapture.
+                    _dispatcher.BeginInvoke(new Action(() =>
                     {
-                        _throughMode = true;
-                        if (!ExecuteAction(_moveTracker.End()))
+                        if (_disposed) return;
+                        try
                         {
-                            if (button == GestureButton.Right)
-                            {
-                                InputSimulator.RightButtonClick();
-                            }
-                            else if (button == GestureButton.Middle)
-                            {
-                                InputSimulator.MiddleButtonClick();
-                            }
+                            _replayClick(button);
                         }
-                    }
-                    finally
-                    {
-                        _throughMode = false;
-                        _ready = GestureButton.None;
-                        _handled = false;
-                    }
+                        catch (Exception error) { Diagnostics.Report("Replay mouse click", error); }
+                    }));
                 }
-                else
-                {
-                    _moveTracker.End();
-                    _ready = GestureButton.None;
-                    _handled = false;
-                }
-            });
+            }
+            finally
+            {
+                _ready = GestureButton.None;
+                _handled = false;
+            }
 
             return true;
+        }
+
+        private static void ReplayClick(GestureButton button)
+        {
+            if (button == GestureButton.Right) InputSimulator.RightButtonClick();
+            else if (button == GestureButton.Middle) InputSimulator.MiddleButtonClick();
         }
 
         private (Action? action, string? caption) GetAction(string trigger)
@@ -221,7 +236,7 @@ namespace at365.Gesture365
 
         private bool HandleActionButtonDown(MouseTrigger trigger)
         {
-            ThreadPool.QueueUserWorkItem((_) => ExecuteAction(trigger));
+            ExecuteAction(trigger);
             return true;
         }
 
@@ -253,19 +268,20 @@ namespace at365.Gesture365
             ],
             [GestureButton.Right] =
             [
-                AppDomain.CurrentDomain.FriendlyName.ToLower(),
+                AppDomain.CurrentDomain.FriendlyName.ToLowerInvariant(),
                 "explorer.exe",
             ],
             [GestureButton.Middle] =
             [
-                AppDomain.CurrentDomain.FriendlyName.ToLower(),
+                AppDomain.CurrentDomain.FriendlyName.ToLowerInvariant(),
                 "msedge.exe", "chrome.exe", // Web Browser
             ],
         };
 
         private void LoadConfig()
         {
-            _processBlackList = [.. Settings.Load<string[]>("blacklist.json", [])];
+            _processBlackList = new HashSet<string>(Settings.Load<string[]>("blacklist.json", [])
+                .Where(name => !string.IsNullOrWhiteSpace(name)), StringComparer.OrdinalIgnoreCase);
         }
 
         private void ToggleBlackList(string processName)

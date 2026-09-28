@@ -16,10 +16,9 @@ namespace at365.Watch365
         public Watch()
         {
             InitializeComponent();
-            _timer = new DispatcherTimer(
-                TimeSpan.FromMilliseconds(1000),
-                DispatcherPriority.Normal,
-                (sender, e) =>
+            _timer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher);
+            _timer.Interval = TimeSpan.FromSeconds(1);
+            _timer.Tick += (sender, e) =>
                 {
                     try
                     {
@@ -27,9 +26,8 @@ namespace at365.Watch365
                         _timer.Interval = TimeSpan.FromMilliseconds(1000 - now.Millisecond);
                         RefreshTime(now);
                     }
-                    catch { }
-                },
-                Dispatcher);
+                    catch (Exception error) { Common365.Diagnostics.Report("Clock update", error); }
+                };
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -52,6 +50,7 @@ namespace at365.Watch365
             {
                 RefreshTime(DateTime.Now);
                 Show();
+                RefreshBounds();
                 _timer.Start();
             }
             else
@@ -67,16 +66,17 @@ namespace at365.Watch365
         }
 
         private DateTime _refreshPreviewTime;
-        private void RefreshTime(DateTime now)
+        internal void RefreshTime(DateTime now)
         {
-            if (now.Second == _refreshPreviewTime.Second) return;
+            if (now.Ticks / TimeSpan.TicksPerSecond == _refreshPreviewTime.Ticks / TimeSpan.TicksPerSecond) return;
 
-            textBlockLeft.Text = now.ToString("HH:mm", CultureInfo.InvariantCulture);
             textBlockSecond.Text = now.ToString(":ss", CultureInfo.InvariantCulture);
-            textBlockRight.Text = now.ToString("M/d ddd", CultureInfo.InvariantCulture);
+            if (now.Date != _refreshPreviewTime.Date)
+                textBlockRight.Text = now.ToString("M/d ddd", CultureInfo.InvariantCulture);
 
-            if (now.Minute != _refreshPreviewTime.Minute)
+            if (now.Ticks / TimeSpan.TicksPerMinute != _refreshPreviewTime.Ticks / TimeSpan.TicksPerMinute)
             {
+                textBlockLeft.Text = now.ToString("HH:mm", CultureInfo.InvariantCulture);
                 RefreshBounds();
             }
 
@@ -88,7 +88,8 @@ namespace at365.Watch365
             NativeHelper.SetupOverlayWindowStyle(this);
 
             var settings = Shell.Properties.Settings.Default;
-            var alignment = (VerticalAlignment)settings.Alignment;
+            var alignment = settings.Alignment == (int)VerticalAlignment.Bottom
+                ? VerticalAlignment.Bottom : VerticalAlignment.Top;
             textBlockLeft.VerticalAlignment = alignment;
             textBlockSecond.VerticalAlignment = alignment;
             textBlockRight.VerticalAlignment = alignment;
@@ -98,11 +99,12 @@ namespace at365.Watch365
                 .ThenBy(each => (each.WorkingArea.Left, each.WorkingArea.Top))
                 .ToArray();
             var monitor = settings.Monitor;
-            var screen = screens[monitor < screens.Length ? monitor : 0];
+            if (screens.Length == 0) return;
+            var screen = screens[monitor >= 0 && monitor < screens.Length ? monitor : 0];
             var bounds = screen.Bounds;
             var dpiScale = VisualTreeHelper.GetDpi(this);
             Left = Math.Round(bounds.Left / dpiScale.DpiScaleX);
-            Width = Math.Round(bounds.Width / dpiScale.DpiScaleY);
+            Width = Math.Round(bounds.Width / dpiScale.DpiScaleX);
             Top = alignment == VerticalAlignment.Top
                 ? Math.Round(bounds.Top / dpiScale.DpiScaleY)
                 : Math.Round(bounds.Bottom / dpiScale.DpiScaleY - ActualHeight);
