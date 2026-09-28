@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Interop;
+using at365.Common365;
 
 namespace at365.Shell
 {
@@ -28,27 +29,11 @@ namespace at365.Shell
         {
             if (msg == WM_DPICHANGED)
             {
-                RestartApplication();
+                ApplicationLifetime.RequestRestart();
                 handled = true;
             }
 
             return IntPtr.Zero;
-        }
-
-        private static void RestartApplication()
-        {
-            try
-            {
-                var exePath = Process.GetCurrentProcess().MainModule?.FileName;
-                if (!string.IsNullOrEmpty(exePath))
-                {
-                    Process.Start(exePath);
-                    System.Windows.Application.Current?.Shutdown();
-                }
-            }
-            catch
-            {
-            }
         }
 
         public void Dispose()
@@ -59,7 +44,7 @@ namespace at365.Shell
             }
 
             _hwndSource?.RemoveHook(WndProc);
-            _hwndSource?.Dispose();
+            // The Window owns this HwndSource; only remove our hook.
             _hwndSource = null;
             _disposed = true;
         }

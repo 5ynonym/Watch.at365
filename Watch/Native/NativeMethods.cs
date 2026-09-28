@@ -46,7 +46,7 @@ namespace at365.Native365
         public static extern bool GetWindowRect(nint hwnd, out RECT lpRect);
 
         [DllImport("dwmapi.dll")]
-        public static extern long DwmGetWindowAttribute(nint hWnd, DWMWINDOWATTRIBUTE dwAttribute, out RECT rect, int cbAttribute);
+        public static extern int DwmGetWindowAttribute(nint hWnd, DWMWINDOWATTRIBUTE dwAttribute, out RECT rect, int cbAttribute);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern int GetWindowText(nint hWnd, StringBuilder lpString, int nMaxCount);
@@ -61,8 +61,8 @@ namespace at365.Native365
         [PreserveSig]
         public static extern uint GetModuleFileName([In] nint hModule, [Out] StringBuilder lpFilename, [In][MarshalAs(UnmanagedType.U4)] int nSize);
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-        public static extern nint GetModuleHandle(string name);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern nint GetModuleHandle(string? name);
 
         [DllImport("user32.dll")]
         public static extern nint WindowFromPoint(POINT point);
@@ -70,7 +70,7 @@ namespace at365.Native365
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool UnhookWindowsHookEx(nint hook);
 
-        [DllImport("user32.dll")]
+        [DllImport("user32.dll", SetLastError = true)]
         public static extern nint SetWindowsHookEx(nint hHook, MouseHookCallback lpfn, nint hInstance, int threadId);
 
         [DllImport("user32.dll")]

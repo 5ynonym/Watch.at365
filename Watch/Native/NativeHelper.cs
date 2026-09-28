@@ -17,9 +17,12 @@ namespace at365.Native365
         public static void OpenCurrentProcessFolder()
         {
             var path = WindowInfo.GetCurrentWindow().FileName;
-            if (!string.IsNullOrEmpty(path))
+            var directory = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory))
             {
-                Process.Start("explorer", Path.GetDirectoryName(path));
+                var startInfo = new ProcessStartInfo("explorer.exe") { UseShellExecute = false };
+                startInfo.ArgumentList.Add(directory);
+                using var process = Process.Start(startInfo);
             }
         }
 
@@ -46,6 +49,7 @@ namespace at365.Native365
             var procs = Process.GetProcessesByName(processName);
             foreach (Process p in procs)
             {
+                using var process = p;
                 if (IsIconic(p.MainWindowHandle))
                 {
                     SetWindowState(p.MainWindowHandle, 9); // SW_RESTORE
@@ -107,7 +111,7 @@ namespace at365.Native365
         {
             try
             {
-                Process.Start(new ProcessStartInfo
+                using var process = Process.Start(new ProcessStartInfo
                 {
                     FileName = "cmd.exe",
                     Arguments = "/c tscon rdp-tcp#0 /dest:console",
@@ -120,7 +124,9 @@ namespace at365.Native365
 
         public static void MoveCursor()
         {
-            var bounds = Screen.PrimaryScreen.Bounds;
+            var screen = Screen.PrimaryScreen;
+            if (screen == null) return;
+            var bounds = screen.Bounds;
             Cursor.Position = new Point(
                 (bounds.Left + bounds.Right) / 2,
                 (bounds.Top + bounds.Bottom) / 2);
@@ -166,7 +172,7 @@ namespace at365.Native365
             var hwnd = GetForegroundWindow();
             if (!IsTargetHWND(hwnd)) return false;
 
-            GetWindowRect(hwnd, out var rect);
+            if (!GetWindowRect(hwnd, out var rect)) return false;
 
             var workingArea = GetWorkingArea(rect);
             if (rect.Width > workingArea.Width) return false;
@@ -175,7 +181,8 @@ namespace at365.Native365
             if (moveLeft && diff <= 0 || moveRight && diff >= 0) return false;
 
             // 端に近ければ強制的にfitさせる
-            DwmGetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS, out var rect2, Marshal.SizeOf(typeof(RECT)));
+            if (DwmGetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS, out var rect2, Marshal.SizeOf<RECT>()) != 0)
+                rect2 = rect;
             fitTop |= rect2.Height <= workingArea.Height && rect.Top < workingArea.Top;
             fitBottom |= rect2.Height <= workingArea.Height && rect.Bottom > workingArea.Bottom;
             fitTop |= (rect.Top > workingArea.Top - FIT_PADDING_TOP && rect.Top < workingArea.Top + FIT_PADDING_TOP);
@@ -206,7 +213,7 @@ namespace at365.Native365
             var hwnd = GetForegroundWindow();
             if (!IsTargetHWND(hwnd)) return false;
 
-            GetWindowRect(hwnd, out var rect);
+            if (!GetWindowRect(hwnd, out var rect)) return false;
             var workingArea = GetWorkingArea(rect);
             if (rect.Width >= workingArea.Width * 2) return false;
 
@@ -243,7 +250,8 @@ namespace at365.Native365
             fitTop |= overflowHeight;
             fitBottom |= overflowHeight;
 
-            DwmGetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS, out var rect2, Marshal.SizeOf(typeof(RECT)));
+            if (DwmGetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_EXTENDED_FRAME_BOUNDS, out var rect2, Marshal.SizeOf<RECT>()) != 0)
+                rect2 = rect;
             fitTop |= rect2.Height <= workingArea.Height && rect.Top < workingArea.Top;
             fitBottom |= rect2.Height <= workingArea.Height && rect.Bottom > workingArea.Bottom;
             fitTop |= (rect.Top > workingArea.Top - FIT_PADDING_TOP && rect.Top < workingArea.Top + FIT_PADDING_TOP);
@@ -283,7 +291,7 @@ namespace at365.Native365
             var hwnd = GetForegroundWindow();
             if (!IsTargetHWND(hwnd)) return;
 
-            SendMessage(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, nint.Zero);
+            PostMessage(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, nint.Zero);
         }
 
         public static void MaximizeWindow()
@@ -291,7 +299,7 @@ namespace at365.Native365
             var hwnd = GetForegroundWindow();
             if (!IsTargetHWND(hwnd)) return;
 
-            SendMessage(hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, nint.Zero);
+            PostMessage(hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, nint.Zero);
         }
 
         private static RECT GetWorkingArea(RECT rect)

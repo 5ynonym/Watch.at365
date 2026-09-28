@@ -1,165 +1,78 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.ComponentModel;
+using System.Runtime.InteropServices;
 using at365.Native365;
 
-namespace at365.Gesture365
+namespace at365.Gesture365;
+
+public class InputSimulator
 {
-    public class InputSimulator
+    public static readonly InputSimulator Instance = new();
+    internal static readonly nint InputMarker = 0x365A7;
+    private static readonly int InputSize = Marshal.SizeOf<NativeMethods.INPUT>();
+    public KeyboardSimulator Keyboard { get; } = new();
+    public MouseSimulator Mouse { get; } = new();
+    public static void LeftButtonClick() => Instance.Mouse.LeftButtonClick();
+    public static void RightButtonClick() => Instance.Mouse.RightButtonClick();
+    public static void MiddleButtonClick() => Instance.Mouse.MiddleButtonClick();
+
+    internal static void Send(NativeMethods.INPUT[] inputs)
     {
-        public static readonly InputSimulator Instance = new();
+        if (NativeMethods.SendInput((uint)inputs.Length, inputs, InputSize) != inputs.Length)
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+    }
+}
 
-        private readonly KeyboardSimulator _keyboard;
-        private readonly MouseSimulator _mouse;
+public class MouseSimulator
+{
+    public void LeftButtonClick() => Click(NativeMethods.MOUSEEVENTF_LEFTDOWN, NativeMethods.MOUSEEVENTF_LEFTUP);
+    public void RightButtonClick() => Click(NativeMethods.MOUSEEVENTF_RIGHTDOWN, NativeMethods.MOUSEEVENTF_RIGHTUP);
+    public void MiddleButtonClick() => Click(NativeMethods.MOUSEEVENTF_MIDDLEDOWN, NativeMethods.MOUSEEVENTF_MIDDLEUP);
 
-        public InputSimulator()
+    private static void Click(uint down, uint up) => InputSimulator.Send([CreateInput(down), CreateInput(up)]);
+    private static NativeMethods.INPUT CreateInput(uint flags) => new()
+    {
+        type = NativeMethods.INPUT_MOUSE,
+        u = new NativeMethods.INPUTUNION
         {
-            _keyboard = new KeyboardSimulator();
-            _mouse = new MouseSimulator();
+            mi = new NativeMethods.MOUSEINPUT { dwFlags = flags, dwExtraInfo = InputSimulator.InputMarker }
         }
+    };
+}
 
-        public KeyboardSimulator Keyboard => _keyboard;
-        public MouseSimulator Mouse => _mouse;
+public class KeyboardSimulator
+{
+    public void ModifiedKeyStroke(uint modifierKeyCode, uint keyCode) =>
+        ModifiedKeyStroke(modifierKeyCode == 0 ? [] : new[] { modifierKeyCode }, keyCode);
 
-        public static void LeftButtonClick() => Instance.Mouse.LeftButtonClick();
-        public static void RightButtonClick() => Instance.Mouse.RightButtonClick();
-        public static void MiddleButtonClick() => Instance.Mouse.MiddleButtonClick();
+    public void ModifiedKeyStroke(IEnumerable<uint> modifierKeyCodes, uint keyCode) =>
+        InputSimulator.Send(BuildInputs(modifierKeyCodes, keyCode));
+
+    internal static NativeMethods.INPUT[] BuildInputs(IEnumerable<uint> modifierKeyCodes, uint keyCode)
+    {
+        var modifiers = modifierKeyCodes.Where(key => key != 0).Distinct().ToArray();
+        var inputs = new List<NativeMethods.INPUT>(2 * modifiers.Length + 2);
+        foreach (var modifier in modifiers) inputs.Add(CreateInput(modifier, false));
+        inputs.Add(CreateInput(keyCode, false));
+        inputs.Add(CreateInput(keyCode, true));
+        for (var i = modifiers.Length - 1; i >= 0; i--) inputs.Add(CreateInput(modifiers[i], true));
+        return inputs.ToArray();
     }
 
-    public class MouseSimulator
+    private static NativeMethods.INPUT CreateInput(uint key, bool released) => new()
     {
-        public void LeftButtonClick()
+        type = NativeMethods.INPUT_KEYBOARD,
+        u = new NativeMethods.INPUTUNION
         {
-            LeftButtonDown();
-            LeftButtonUp();
-        }
-
-        public void RightButtonClick()
-        {
-            RightButtonDown();
-            RightButtonUp();
-        }
-
-        public void MiddleButtonClick()
-        {
-            MiddleButtonDown();
-            MiddleButtonUp();
-        }
-
-        private static void LeftButtonDown()
-        {
-            SendMouseInput(NativeMethods.MOUSEEVENTF_LEFTDOWN);
-        }
-
-        private static void LeftButtonUp()
-        {
-            SendMouseInput(NativeMethods.MOUSEEVENTF_LEFTUP);
-        }
-
-        private static void RightButtonDown()
-        {
-            SendMouseInput(NativeMethods.MOUSEEVENTF_RIGHTDOWN);
-        }
-
-        private static void RightButtonUp()
-        {
-            SendMouseInput(NativeMethods.MOUSEEVENTF_RIGHTUP);
-        }
-
-        private static void MiddleButtonDown()
-        {
-            SendMouseInput(NativeMethods.MOUSEEVENTF_MIDDLEDOWN);
-        }
-
-        private static void MiddleButtonUp()
-        {
-            SendMouseInput(NativeMethods.MOUSEEVENTF_MIDDLEUP);
-        }
-
-        private static void SendMouseInput(uint flags)
-        {
-            var input = new NativeMethods.INPUT
+            ki = new NativeMethods.KEYBDINPUT
             {
-                type = NativeMethods.INPUT_MOUSE,
-                u = new NativeMethods.INPUTUNION
-                {
-                    mi = new NativeMethods.MOUSEINPUT
-                    {
-                        dx = 0,
-                        dy = 0,
-                        mouseData = 0,
-                        dwFlags = flags,
-                        time = 0,
-                        dwExtraInfo = nint.Zero
-                    }
-                }
-            };
-
-            NativeMethods.SendInput(1, new[] { input }, Marshal.SizeOf(typeof(NativeMethods.INPUT)));
-        }
-    }
-
-    public class KeyboardSimulator
-    {
-        public void ModifiedKeyStroke(uint modifierKeyCode, uint keyCode)
-        {
-            if (modifierKeyCode == 0)  // VK_NONE
-            {
-                PressKey(keyCode);
-                ReleaseKey(keyCode);
-            }
-            else
-            {
-                PressKey(modifierKeyCode);
-                PressKey(keyCode);
-                ReleaseKey(keyCode);
-                ReleaseKey(modifierKeyCode);
+                wVk = (ushort)key,
+                dwFlags = (released ? NativeMethods.KEYEVENTF_KEYUP : 0)
+                    | (IsExtendedKey(key) ? NativeMethods.KEYEVENTF_EXTENDEDKEY : 0),
+                dwExtraInfo = InputSimulator.InputMarker
             }
         }
+    };
 
-        public void ModifiedKeyStroke(IEnumerable<uint> modifierKeyCodes, uint keyCode)
-        {
-            foreach (var modifierKeyCode in modifierKeyCodes)
-            {
-                PressKey(modifierKeyCode);
-            }
-
-            PressKey(keyCode);
-            ReleaseKey(keyCode);
-
-            foreach (var modifierKeyCode in modifierKeyCodes.Reverse())
-            {
-                ReleaseKey(modifierKeyCode);
-            }
-        }
-
-        private static void PressKey(uint keyCode)
-        {
-            SendKeyInput(keyCode, 0);
-        }
-
-        private static void ReleaseKey(uint keyCode)
-        {
-            SendKeyInput(keyCode, NativeMethods.KEYEVENTF_KEYUP);
-        }
-
-        private static void SendKeyInput(uint keyCode, uint flags)
-        {
-            var input = new NativeMethods.INPUT
-            {
-                type = NativeMethods.INPUT_KEYBOARD,
-                u = new NativeMethods.INPUTUNION
-                {
-                    ki = new NativeMethods.KEYBDINPUT
-                    {
-                        wVk = (ushort)keyCode,
-                        wScan = 0,
-                        dwFlags = flags,
-                        time = 0,
-                        dwExtraInfo = nint.Zero
-                    }
-                }
-            };
-
-            NativeMethods.SendInput(1, new[] { input }, Marshal.SizeOf(typeof(NativeMethods.INPUT)));
-        }
-    }
+    private static bool IsExtendedKey(uint key) => key is >= 0x21 and <= 0x28
+        or 0x2D or 0x2E or 0x5B or 0x5C or 0x5D or 0x6F or 0x90 or 0xA3 or 0xA5;
 }

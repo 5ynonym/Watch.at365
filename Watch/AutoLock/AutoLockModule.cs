@@ -1,114 +1,99 @@
-using System.Diagnostics;
+﻿using System.ComponentModel;
 using System.Runtime.InteropServices;
-using System.Threading;
+using System.Windows.Threading;
 using at365.Common365;
 using at365.Native365;
 using static at365.Native365.NativeMethods;
 
-namespace at365.AutoLock365
+namespace at365.AutoLock365;
+
+/// <summary>マウス入力のみを対象に、6 時間の無操作でロックする。</summary>
+public sealed class AutoLockModule : ModuleBase<AutoLockModule>
 {
-    /// <summary>
-    /// マウスが一定時間操作されなかった場合に Windows をロックする。
-    /// 計測対象はマウス入力のみ（キーボードは含まない）。
-    /// </summary>
-    public sealed class AutoLockModule : ModuleBase<AutoLockModule>
+    public static readonly TimeSpan IdleThreshold = TimeSpan.FromHours(6);
+    private static readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(1);
+    public static void Start() { _ = Instance; }
+
+    private readonly MouseHookCallback _callback;
+    private readonly DispatcherTimer _timer;
+    private nint _hHook;
+    private long _lastMouseInputMilliseconds;
+    private bool _enabled;
+
+    public AutoLockModule()
     {
-        /// <summary>マウスが操作されないまま経過した場合にロックを発動する閾値。</summary>
-        public static readonly TimeSpan IdleThreshold = TimeSpan.FromHours(6);
-
-        /// <summary>アイドル時間のチェック間隔。閾値より十分細かくする。</summary>
-        private static readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(1);
-
-        public static void Start() { var _ = Instance; }
-
-        private readonly MouseHookCallback _callback;
-        private nint _hHook;
-        private System.Threading.Timer? _timer;
-        private long _lastMouseInputTicks;
-        private bool _enabled;
-
-        public AutoLockModule()
+        _timer = new DispatcherTimer { Interval = CheckInterval };
+        _timer.Tick += OnTick;
+        _callback = (int nCode, uint wParam, [In] MSLLHOOKSTRUCT lParam) =>
         {
-            _callback = (int nCode, uint wParam, [In] MSLLHOOKSTRUCT lParam) =>
-            {
-                if (nCode >= 0)
-                {
-                    // どのマウスイベント（移動・クリック・ホイール）でも操作とみなす
-                    Volatile.Write(ref _lastMouseInputTicks, DateTime.UtcNow.Ticks);
-                }
-                return CallNextHookEx(_hHook, nCode, wParam, lParam);
-            };
-        }
+            if (nCode >= 0) ResetLastInput();
+            return CallNextHookEx(_hHook, nCode, wParam, lParam);
+        };
+    }
 
-        /// <summary>
-        /// 自動ロック機能の有効・無効を切り替える。
-        /// </summary>
-        public bool Enabled
+    public bool Enabled
+    {
+        get => _enabled;
+        set
         {
-            get => _enabled;
-            set
-            {
-                if (_enabled == value) return;
-                _enabled = value;
-                at365.Shell.Properties.Settings.Default.AutoLockEnabled = value;
-                at365.Shell.Properties.Settings.Default.Save();
-                ResetLastInput();
-            }
-        }
-
-        protected override void InitializeCore()
-        {
-            _enabled = at365.Shell.Properties.Settings.Default.AutoLockEnabled;
-            ResetLastInput();
-            SetHook();
-            _timer = new System.Threading.Timer(OnTick, null, CheckInterval, CheckInterval);
-        }
-
-        protected override void DisposeCore(bool disposing)
-        {
-            try { _timer?.Dispose(); } catch { }
-            _timer = null;
-            try { Unhook(); } catch { }
-        }
-
-        private void SetHook()
-        {
-            using var process = Process.GetCurrentProcess();
-            nint hInstance = GetModuleHandle(process.MainModule!.ModuleName);
-            _hHook = SetWindowsHookEx(WH_MOUSE_LL, _callback, hInstance, 0);
-        }
-
-        private void Unhook()
-        {
-            if (_hHook != nint.Zero)
-            {
-                UnhookWindowsHookEx(_hHook);
-                _hHook = nint.Zero;
-            }
-        }
-
-        private void ResetLastInput()
-        {
-            Volatile.Write(ref _lastMouseInputTicks, DateTime.UtcNow.Ticks);
-        }
-
-        private void OnTick(object? state)
-        {
+            _timer.Dispatcher.VerifyAccess();
+            if (_enabled == value) return;
             try
             {
-                if (!_enabled) return;
-
-                var lastTicks = Volatile.Read(ref _lastMouseInputTicks);
-                var elapsed = DateTime.UtcNow - new DateTime(lastTicks, DateTimeKind.Utc);
-                if (elapsed < IdleThreshold) return;
-
-                // ロック後はカウンタをリセットして連続ロックを避ける
-                ResetLastInput();
-                NativeHelper.LockWorkstation();
+                SetMonitoring(value);
+                at365.Shell.Properties.Settings.Default.AutoLockEnabled = value;
+                at365.Shell.Properties.Settings.Default.Save();
             }
-            catch
-            {
-            }
+            catch (Exception error) { Diagnostics.Report("Set auto lock", error); }
         }
+    }
+
+    protected override void InitializeCore() =>
+        SetMonitoring(at365.Shell.Properties.Settings.Default.AutoLockEnabled);
+
+    private void SetMonitoring(bool enabled)
+    {
+        if (enabled && _hHook == nint.Zero)
+        {
+            _hHook = SetWindowsHookEx(WH_MOUSE_LL, _callback, GetModuleHandle(null), 0);
+            if (_hHook == nint.Zero) throw new Win32Exception(Marshal.GetLastWin32Error());
+        }
+        _enabled = enabled;
+        ResetLastInput();
+        if (enabled) _timer.Start();
+        else
+        {
+            _timer.Stop();
+            Unhook();
+        }
+    }
+
+    protected override void DisposeCore(bool disposing)
+    {
+        _enabled = false;
+        _timer.Stop();
+        _timer.Tick -= OnTick;
+        Unhook();
+    }
+
+    private void Unhook()
+    {
+        if (_hHook == nint.Zero) return;
+        if (!UnhookWindowsHookEx(_hHook))
+        {
+            Diagnostics.Report("Unhook auto lock", new Win32Exception(Marshal.GetLastWin32Error()));
+            return;
+        }
+        _hHook = nint.Zero;
+    }
+
+    private void ResetLastInput() => _lastMouseInputMilliseconds = Environment.TickCount64;
+
+    private void OnTick(object? sender, EventArgs e)
+    {
+        if (!_enabled || Environment.TickCount64 - _lastMouseInputMilliseconds < IdleThreshold.TotalMilliseconds) return;
+        ResetLastInput();
+        if (!LockWorkStation())
+            Diagnostics.Report("Auto lock", new Win32Exception(Marshal.GetLastWin32Error()));
     }
 }

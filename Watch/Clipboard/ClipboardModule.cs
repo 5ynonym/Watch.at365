@@ -17,7 +17,7 @@ namespace at365.Clipboard365
             _cleaningTimer = new DispatcherTimer(
                 TimeSpan.FromMinutes(5),
                 DispatcherPriority.Normal,
-                (_, _) => { try { CleanupClipboard(); } catch { } },
+                (_, _) => { try { CleanupClipboard(); } catch (Exception error) { Diagnostics.Report("Clipboard cleanup", error); } },
                 Dispatcher.CurrentDispatcher);
         }
 
@@ -25,18 +25,24 @@ namespace at365.Clipboard365
         {
             _cleaningTimer?.Stop();
             _cleaningTimer = null;
+            _clipboardPreviewText = null;
         }
 
         private string? _clipboardPreviewText;
         private void CleanupClipboard()
         {
-            var dataObject = Clipboard.GetDataObject();
+            CleanupClipboard(Clipboard.GetDataObject(), Clipboard.Clear);
+        }
+
+        internal void CleanupClipboard(System.Windows.IDataObject? dataObject, Action clear)
+        {
+            // Preserve the existing no-data behavior (previously skipped by the catch).
+            if (dataObject == null) return;
             var text = dataObject.GetDataPresent(DataFormats.Text) ? (string)dataObject.GetData(DataFormats.Text) : null;
             if (text == _clipboardPreviewText)
             {
-                Clipboard.Clear();
+                clear();
                 _clipboardPreviewText = null;
-                GC.Collect();
             }
             else
             {

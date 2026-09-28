@@ -366,3 +366,4 @@ FodyWeavers.xsd
 
 # Local deployment destination
 /deploy.local.txt
+/REVIEW.md

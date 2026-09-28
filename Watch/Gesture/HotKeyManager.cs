@@ -2,6 +2,7 @@
 using System.Windows.Input;
 using System.Windows.Interop;
 using at365.Native365;
+using at365.Common365;
 using static at365.Native365.NativeMethods;
 
 namespace at365.Gesture365
@@ -60,7 +61,8 @@ namespace at365.Gesture365
 
             if (action != null)
             {
-                action();
+                try { action(); }
+                catch (Exception error) { Diagnostics.Report("Hotkey action", error); }
                 return true;
             }
 
@@ -80,7 +82,7 @@ namespace at365.Gesture365
                 {
                     NativeMethods.UnregisterHotKey(_windowHandle, hotKeyId);
                 }
-                catch { }
+                catch (Exception error) { Diagnostics.Report("Unregister hotkey", error); }
             }
 
             _registeredHotKeys.Clear();
@@ -94,7 +96,7 @@ namespace at365.Gesture365
                 {
                     Instance.RegisterHotKey(process, modifierKeys, key, action, gestureAction);
                 }
-                catch { }
+                catch (Exception error) { Diagnostics.Report("Register hotkey", error); }
             };
         }
     }

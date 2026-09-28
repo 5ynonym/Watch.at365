@@ -7,9 +7,9 @@ namespace at365.Native365
     public class WindowInfo
     {
         public IntPtr Hwnd { get; private set; }
-        public string FileName { get; private set; }
-        public string ModuleName { get; private set; }
-        public string ExeName => Path.GetFileName(FileName).ToLower();
+        public string FileName { get; private set; } = string.Empty;
+        public string ModuleName { get; private set; } = string.Empty;
+        public string ExeName => Path.GetFileName(FileName).ToLowerInvariant();
 
         public static WindowInfo GetPointedWindow()
         {

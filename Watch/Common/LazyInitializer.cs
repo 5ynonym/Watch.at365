@@ -5,15 +5,20 @@
         static LazyInitializer() { }
 
         private static T? _instance;
+        private static readonly object Sync = new();
         public static T Instance => GetInstance();
         public static T GetInstance(Action<T>? initializer = null)
         {
-            if (_instance == null)
+            lock (Sync)
             {
-                _instance = new();
-                initializer?.Invoke(_instance);
+                if (_instance == null)
+                {
+                    var instance = new T();
+                    initializer?.Invoke(instance);
+                    _instance = instance;
+                }
+                return _instance;
             }
-            return _instance;
         }
     }
 }

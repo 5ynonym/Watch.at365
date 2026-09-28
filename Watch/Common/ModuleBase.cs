@@ -13,15 +13,12 @@
 
         private bool disposed = false;
 
-        ~ModuleBase()
-        {
-            Dispose(false);
-        }
-
         public static void DisposeAll()
         {
-            _loadedModules.ForEach(module => SafeDispose(module));
+            var modules = _loadedModules.ToArray();
             _loadedModules.Clear();
+            foreach (var module in modules.Reverse())
+                SafeDispose(module);
         }
 
         protected abstract void InitializeCore();
@@ -29,8 +26,16 @@
 
         protected void Load()
         {
-            InitializeCore();
-            _loadedModules.Add(this);
+            try
+            {
+                InitializeCore();
+                _loadedModules.Add(this);
+            }
+            catch
+            {
+                SafeDispose(this);
+                throw;
+            }
         }
 
         void IDisposable.Dispose()
@@ -42,15 +47,16 @@
 
         protected static void SafeDispose<T>(in T disposable) where T : class, IDisposable
         {
-            try { disposable?.Dispose(); } catch { }
+            try { disposable?.Dispose(); }
+            catch (Exception error) { Diagnostics.Report("Dispose", error); }
         }
 
         private void Dispose(bool disposing)
         {
             if (!disposed)
             {
-                DisposeCore(disposing);
                 disposed = true;
+                DisposeCore(disposing);
             }
         }
     }
