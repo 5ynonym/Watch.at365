@@ -162,6 +162,9 @@ namespace at365.Shell
             _autoLockEnabled = new ToolStripMenuItem("Auto Lock (6h)", null, (s, e) => ToggleAutoLock());
             contextMenu.Items.Add(_autoLockEnabled);
 
+            contextMenu.Items.Add(new ToolStripMenuItem("Clipboard History (Alt+C)", null,
+                (s, e) => ClipboardModule.Instance.ShowHistory()));
+
             contextMenu.Items.Add(new ToolStripSeparator());
 
             var exitMenu = new ToolStripMenuItem("Exit", null, (s, e) => System.Windows.Application.Current?.Shutdown());

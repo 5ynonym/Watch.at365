@@ -29,6 +29,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- LegacyUserSettings is the read-only migration type; do not compile the old generated duplicate. -->
+    <Compile Remove="Properties\Settings.Designer.cs" />
     <None Remove="Hatten.ttf" />
     <None Remove="Resources\Off.ico" />
     <None Remove="Resources\On.ico" />
