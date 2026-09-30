@@ -9,11 +9,17 @@ internal sealed class ApplicationConfiguration
     public int Alignment { get; set; }
     public bool Visible { get; set; } = true;
     public bool AutoLockEnabled { get; set; }
+    public int ClipboardHistoryLimit { get; set; } = 50;
+    public int ClipboardHistoryWidth { get; set; } = 520;
+    public int ClipboardHistoryHeight { get; set; } = 640;
     public string[] Blacklist { get; set; } = [];
 
     internal void Normalize()
     {
         Monitor = Math.Max(0, Monitor);
+        ClipboardHistoryLimit = Math.Clamp(ClipboardHistoryLimit, 0, 1000);
+        ClipboardHistoryWidth = Math.Clamp(ClipboardHistoryWidth, 280, 1600);
+        ClipboardHistoryHeight = Math.Clamp(ClipboardHistoryHeight, 200, 1600);
         Alignment = Alignment == 2 ? 2 : 0; // WPF Bottom / Top
         Blacklist = (Blacklist ?? []).Where(name => !string.IsNullOrWhiteSpace(name))
             .Select(name => name.Trim().ToLowerInvariant()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();

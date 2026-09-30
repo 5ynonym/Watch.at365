@@ -11,9 +11,13 @@ namespace at365.Clipboard365
         public static void Start() { var _ = Instance; }
 
         private DispatcherTimer? _cleaningTimer;
+        private ClipboardHistoryService? _historyService;
+
+        public void ShowHistory() => _historyService?.ShowHistory();
 
         protected override void InitializeCore()
         {
+            _historyService = new ClipboardHistoryService(ApplicationSettings.Current.ClipboardHistoryLimit);
             _cleaningTimer = new DispatcherTimer(
                 TimeSpan.FromMinutes(5),
                 DispatcherPriority.Normal,
@@ -26,6 +30,8 @@ namespace at365.Clipboard365
             _cleaningTimer?.Stop();
             _cleaningTimer = null;
             _clipboardPreviewText = null;
+            _historyService?.Dispose();
+            _historyService = null;
         }
 
         private string? _clipboardPreviewText;
