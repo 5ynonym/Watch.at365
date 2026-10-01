@@ -34,6 +34,8 @@ namespace at365.Shell
         private ToolStripMenuItem? _alignmentBottom;
         private ToolStripMenuItem? _watchVisible;
         private ToolStripMenuItem? _autoLockEnabled;
+        private ToolStripMenuItem? _clipboardHistoryEnabled;
+        private ToolStripMenuItem? _clipboardHistory;
         private HwndSource? _messageSource;
 
         public MainWindow()
@@ -162,8 +164,13 @@ namespace at365.Shell
             _autoLockEnabled = new ToolStripMenuItem("Auto Lock (6h)", null, (s, e) => ToggleAutoLock());
             contextMenu.Items.Add(_autoLockEnabled);
 
-            contextMenu.Items.Add(new ToolStripMenuItem("Clipboard History (Alt+C)", null,
-                (s, e) => ClipboardModule.Instance.ShowHistory()));
+            _clipboardHistoryEnabled = new ToolStripMenuItem("Clipboard History Enabled", null,
+                (s, e) => ToggleClipboardHistory());
+            contextMenu.Items.Add(_clipboardHistoryEnabled);
+
+            _clipboardHistory = new ToolStripMenuItem("Clipboard History (Alt+C)", null,
+                (s, e) => ClipboardModule.Instance.ShowHistory());
+            contextMenu.Items.Add(_clipboardHistory);
 
             contextMenu.Items.Add(new ToolStripSeparator());
 
@@ -249,12 +256,23 @@ namespace at365.Shell
             if (_alignmentBottom != null) _alignmentBottom.Checked = alignment == (int)VerticalAlignment.Bottom;
 
             if (_autoLockEnabled != null) _autoLockEnabled.Checked = AutoLockModule.Instance.Enabled;
+            if (_clipboardHistoryEnabled != null) _clipboardHistoryEnabled.Checked = settings.ClipboardHistoryEnabled;
+            if (_clipboardHistory != null) _clipboardHistory.Enabled = settings.ClipboardHistoryEnabled;
         }
 
         private static void ToggleAutoLock()
         {
             var module = AutoLockModule.Instance;
             module.Enabled = !module.Enabled;
+        }
+
+        private static void ToggleClipboardHistory()
+        {
+            var settings = ApplicationSettings.Current;
+            var enabled = !settings.ClipboardHistoryEnabled;
+            ClipboardModule.Instance.SetHistoryEnabled(enabled);
+            settings.ClipboardHistoryEnabled = enabled;
+            ApplicationSettings.Save();
         }
 
         private void SetMonitor(int monitor)
