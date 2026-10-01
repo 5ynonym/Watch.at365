@@ -155,10 +155,10 @@ namespace at365.Shell
 
             contextMenu.Items.Add(new ToolStripSeparator());
 
-            _watchVisible = new ToolStripMenuItem("Toggle Watch", null, (s, e) => ToggleVisible());
+            _watchVisible = new ToolStripMenuItem("Toggle Watch (Pause)", null, (s, e) => ToggleVisible());
             contextMenu.Items.Add(_watchVisible);
 
-            var displayOffMenu = new ToolStripMenuItem("Turn off Display", null, (s, e) => NativeHelper.TurnOffDisplay());
+            var displayOffMenu = new ToolStripMenuItem("Turn off Display (Shift+Pause)", null, (s, e) => NativeHelper.TurnOffDisplay());
             contextMenu.Items.Add(displayOffMenu);
 
             _autoLockEnabled = new ToolStripMenuItem("Auto Lock (6h)", null, (s, e) => ToggleAutoLock());
