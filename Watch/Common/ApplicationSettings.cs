@@ -9,6 +9,7 @@ internal sealed class ApplicationConfiguration
     public int Alignment { get; set; }
     public bool Visible { get; set; } = true;
     public bool AutoLockEnabled { get; set; }
+    public bool ClipboardHistoryEnabled { get; set; }
     public int ClipboardHistoryLimit { get; set; } = 50;
     public int ClipboardHistoryWidth { get; set; } = 520;
     public int ClipboardHistoryHeight { get; set; } = 640;

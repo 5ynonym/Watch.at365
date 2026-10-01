@@ -30,15 +30,16 @@ dotnet run --project .\Watch\Watch.csproj
 
 右クリックメニューでは次の操作ができます。
 
-| メニュー                       | 操作                             |
-| ------------------------------ | -------------------------------- |
-| `Monitor` → `0`～`3`           | 時計を表示するモニターを選択     |
-| `Alignment` → `Top` / `Bottom` | 時計を画面の上端 / 下端へ配置    |
-| `Toggle Watch`                 | 時計の表示・非表示を切り替え     |
-| `Turn off Display`             | ディスプレイを即座に消灯         |
-| `Auto Lock (6h)`               | 自動ロックの有効・無効を切り替え |
-| `Clipboard History (Alt+C)`    | クリップボード履歴を開く         |
-| `Exit`                         | アプリケーションを終了           |
+| メニュー                       | 操作                                     |
+| ------------------------------ | ---------------------------------------- |
+| `Monitor` → `0`～`3`           | 時計を表示するモニターを選択             |
+| `Alignment` → `Top` / `Bottom` | 時計を画面の上端 / 下端へ配置            |
+| `Toggle Watch`                 | 時計の表示・非表示を切り替え             |
+| `Turn off Display`             | ディスプレイを即座に消灯                 |
+| `Auto Lock (6h)`               | 自動ロックの有効・無効を切り替え         |
+| `Clipboard History Enabled`    | クリップボード履歴の有効・無効を切り替え |
+| `Clipboard History (Alt+C)`    | クリップボード履歴を開く                 |
+| `Exit`                         | アプリケーションを終了                   |
 
 モニター番号はプライマリを `0` とし、残りを作業領域の左座標・上座標の順で並べたアプリ独自の番号です。選択した番号のモニターが存在しない場合は `0` に表示します。
 
@@ -127,6 +128,8 @@ dotnet run --project .\Watch\Watch.csproj
 - 履歴からのコピーに成功すると、その項目を最新（先頭）へ移動します。クリック・Enterのどちらも同じ動作で、二重登録はしません。一覧表示中の新しいコピーは次回表示時に反映し、操作中の選択位置を保ちます。
 - 使用中のクリップボードは最大5回、60ms間隔で再試行します。復元の再試行中に別のコピーが発生した場合や一覧を閉じた場合は、復元を中止します。Alt+C の登録に失敗すると通知し、トレイから開くことができます。
 
+トレイメニューの `Clipboard History Enabled` で履歴の取得、`Alt+C`、履歴の表示を有効・無効に切り替えられます。設定は直ちに `config.json` に保存され、OFF にすると現在保持している履歴も消去されます。初期値は無効です。
+
 保持件数は `config.json` の `ClipboardHistoryLimit` で指定します。初期値は **50**、範囲は **0～1000**（範囲外は補正）です。`0` は履歴の取得を無効にします。件数を超えると古い項目から削除します。画像は元の解像度で保持するため、画像の大きさと件数に応じてメモリーを使います。
 
 ビューの幅は `ClipboardHistoryWidth`（初期値520、280～1600）、高さの上限は `ClipboardHistoryHeight`（初期値640、200～1600）で設定します。履歴が少ない場合は内容に合わせて高さを縮め、項目を削除したときも自動調整します。ウィンドウ自体も角丸にし、上・左・下に10論理pxの余白を設けます（右側は5論理px）。スクロールはピクセル単位で、最終項目の下に項目間の余白を置きません。単位はWPFの論理ピクセル（96 DPI基準）で、表示時はモニターの作業領域に収まるよう縮小します。アプリを終了して `config.json` を編集し、再起動してください。
@@ -147,13 +150,14 @@ dotnet run --project .\Watch\Watch.csproj
 
 以下の設定は `%APPDATA%\at365\Watch\config.json` に保存され、次回起動時にも使用されます。フォルダーとファイルは初回起動時に作成され、トレイメニューで変更した時点で保存されます。
 
-| 設定         | 初期値       |
-| ------------ | ------------ |
-| 時計の表示先 | モニター `0` |
-| 時計の配置   | `Top`        |
-| 時計の表示   | 表示         |
-| 自動ロック   | 無効         |
-| 履歴の保持件数 | `50`       |
+| 設定               | 初期値       |
+| ------------------ | ------------ |
+| 時計の表示先       | モニター `0` |
+| 時計の配置         | `Top`        |
+| 時計の表示         | 表示         |
+| 自動ロック         | 無効         |
+| クリップボード履歴 | 無効         |
+| 履歴の保持件数     | `50`         |
 
 ジェスチャーの除外対象も同じファイルの `Blacklist` に保存します。設定ファイルの例は以下のとおりです。`Alignment` は `0` が上端、`2` が下端です。
 
@@ -163,6 +167,7 @@ dotnet run --project .\Watch\Watch.csproj
   "Alignment": 0,
   "Visible": true,
   "AutoLockEnabled": false,
+  "ClipboardHistoryEnabled": false,
   "ClipboardHistoryLimit": 50,
   "ClipboardHistoryWidth": 520,
   "ClipboardHistoryHeight": 640,
@@ -219,17 +224,17 @@ dotnet run --project .\Watch.RegressionTests\Watch.RegressionTests.csproj
 
 ## ソース構成
 
-| パス                                                                     | 役割                                                       |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| [Watch/MainWindow.xaml.cs](Watch/MainWindow.xaml.cs)                     | 常駐処理、トレイメニュー、時計用ホットキー、モジュール起動 |
-| [Watch/Watch.xaml.cs](Watch/Watch.xaml.cs)                               | 時計の更新、モニター選択、配置                             |
-| [Watch/DPIChangeHandler.cs](Watch/DPIChangeHandler.cs)                   | DPI 変更への対応                                           |
-| [Watch/Gesture/](Watch/Gesture/)                                         | ホットキー登録、マウスフック、ジェスチャー判定、キー送信   |
-| [Watch/Clipboard/ClipboardModule.cs](Watch/Clipboard/ClipboardModule.cs) | クリップボード履歴の起動・終了と定期消去                  |
-| [Watch/Clipboard/ClipboardHistoryService.cs](Watch/Clipboard/ClipboardHistoryService.cs) | 変更通知・Alt+C・取得と復元の再試行 |
-| [Watch/Clipboard/ClipboardHistory.cs](Watch/Clipboard/ClipboardHistory.cs) | 形式変換・画像の複製・履歴件数の管理 |
-| [Watch/Clipboard/ClipboardHistoryWindow.xaml](Watch/Clipboard/ClipboardHistoryWindow.xaml) | 履歴のプレビューとマウス・キーボード操作 |
-| [Watch/AutoLock/AutoLockModule.cs](Watch/AutoLock/AutoLockModule.cs)     | マウス無操作時間の計測とロック                             |
-| [Watch/Native/](Watch/Native/)                                           | Windows API 定義、ウィンドウ・プロセス操作                 |
-| [Watch/Common/](Watch/Common/)                                           | モジュール管理、JSON 設定、実行間隔の制御                  |
-| [Watch/Common/ApplicationSettings.cs](Watch/Common/ApplicationSettings.cs) | JSON 設定の定義・初期値・保存復元                         |
+| パス                                                                                       | 役割                                                       |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| [Watch/MainWindow.xaml.cs](Watch/MainWindow.xaml.cs)                                       | 常駐処理、トレイメニュー、時計用ホットキー、モジュール起動 |
+| [Watch/Watch.xaml.cs](Watch/Watch.xaml.cs)                                                 | 時計の更新、モニター選択、配置                             |
+| [Watch/DPIChangeHandler.cs](Watch/DPIChangeHandler.cs)                                     | DPI 変更への対応                                           |
+| [Watch/Gesture/](Watch/Gesture/)                                                           | ホットキー登録、マウスフック、ジェスチャー判定、キー送信   |
+| [Watch/Clipboard/ClipboardModule.cs](Watch/Clipboard/ClipboardModule.cs)                   | クリップボード履歴の起動・終了と定期消去                   |
+| [Watch/Clipboard/ClipboardHistoryService.cs](Watch/Clipboard/ClipboardHistoryService.cs)   | 変更通知・Alt+C・取得と復元の再試行                        |
+| [Watch/Clipboard/ClipboardHistory.cs](Watch/Clipboard/ClipboardHistory.cs)                 | 形式変換・画像の複製・履歴件数の管理                       |
+| [Watch/Clipboard/ClipboardHistoryWindow.xaml](Watch/Clipboard/ClipboardHistoryWindow.xaml) | 履歴のプレビューとマウス・キーボード操作                   |
+| [Watch/AutoLock/AutoLockModule.cs](Watch/AutoLock/AutoLockModule.cs)                       | マウス無操作時間の計測とロック                             |
+| [Watch/Native/](Watch/Native/)                                                             | Windows API 定義、ウィンドウ・プロセス操作                 |
+| [Watch/Common/](Watch/Common/)                                                             | モジュール管理、JSON 設定、実行間隔の制御                  |
+| [Watch/Common/ApplicationSettings.cs](Watch/Common/ApplicationSettings.cs)                 | JSON 設定の定義・初期値・保存復元                          |

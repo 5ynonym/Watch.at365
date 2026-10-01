@@ -220,8 +220,11 @@ internal static class Program
     {
         var store = TestStore(path);
         var config = store.Load();
+        Assert(!config.ClipboardHistoryEnabled, "History should be disabled by default.");
         Assert(config.ClipboardHistoryLimit == 50, "Default history limit is incorrect.");
         Assert(config.ClipboardHistoryWidth == 520 && config.ClipboardHistoryHeight == 640, "Default view size is incorrect.");
+        config.ClipboardHistoryEnabled = true;
+        Assert(store.Save(config) && store.Load().ClipboardHistoryEnabled, "History enabled state did not survive reload.");
         config.ClipboardHistoryWidth = 700;
         config.ClipboardHistoryHeight = 800;
         Assert(store.Save(config) && store.Load().ClipboardHistoryWidth == 700 && store.Load().ClipboardHistoryHeight == 800,
@@ -287,7 +290,8 @@ internal static class Program
             var delete = FindButton(list)!;
             Assert(delete is not null, "Delete button template was not created.");
             delete!.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0,
-                System.Windows.Input.MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseLeftButtonUpEvent });
+                System.Windows.Input.MouseButton.Left)
+            { RoutedEvent = UIElement.PreviewMouseLeftButtonUpEvent });
             Assert(!restored, "Delete pointer event restored clipboard content.");
             delete.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             Assert(sourceHistory.Entries.Count == 0 && list.Items.Count == 0 && !restored,
@@ -519,16 +523,17 @@ internal static class Program
     {
         var store = TestStore(path);
         var initial = store.Load();
-        Assert(File.Exists(path) && initial.Visible && !initial.AutoLockEnabled && initial.Monitor == 0 && initial.Alignment == 0, "Initial config/defaults missing.");
+        Assert(File.Exists(path) && initial.Visible && !initial.AutoLockEnabled && !initial.ClipboardHistoryEnabled && initial.Monitor == 0 && initial.Alignment == 0, "Initial config/defaults missing.");
         initial.Monitor = 2;
         initial.Alignment = 2;
         initial.Visible = false;
         initial.AutoLockEnabled = true;
+        initial.ClipboardHistoryEnabled = true;
         initial.ClipboardHistoryLimit = 123;
         initial.Blacklist = ["Example.EXE", "example.exe", " another.exe "];
         Assert(store.Save(initial), "Save failed.");
         var loaded = TestStore(path).Load();
-        Assert(loaded.Monitor == 2 && loaded.Alignment == 2 && !loaded.Visible && loaded.AutoLockEnabled, "Settings did not survive reload.");
+        Assert(loaded.Monitor == 2 && loaded.Alignment == 2 && !loaded.Visible && loaded.AutoLockEnabled && loaded.ClipboardHistoryEnabled, "Settings did not survive reload.");
         Assert(loaded.ClipboardHistoryLimit == 123, "History limit did not survive reload.");
         Assert(loaded.Blacklist.SequenceEqual(new[] { "example.exe", "another.exe" }), "Blacklist did not survive normalization/reload.");
         Assert(Directory.GetFiles(Path.GetDirectoryName(path)!).Length == 1, "Temporary file was left behind.");
@@ -540,6 +545,7 @@ internal static class Program
         File.WriteAllText(path, "{\"Monitor\":-5,\"Alignment\":999,\"Blacklist\":null,\"Visible\":false}");
         var loaded = TestStore(path).Load(() => throw new InvalidOperationException("Legacy must not override JSON."));
         Assert(!loaded.Visible && !loaded.AutoLockEnabled && loaded.Monitor == 0 && loaded.Alignment == 0 && loaded.Blacklist.Length == 0, "Missing/invalid property defaults are incorrect.");
+        Assert(!loaded.ClipboardHistoryEnabled, "Existing JSON without history enabled lost the default.");
         Assert(loaded.ClipboardHistoryLimit == 50, "Existing JSON without history limit lost the default.");
     });
 

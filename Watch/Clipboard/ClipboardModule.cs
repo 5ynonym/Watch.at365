@@ -15,9 +15,25 @@ namespace at365.Clipboard365
 
         public void ShowHistory() => _historyService?.ShowHistory();
 
+        public bool HistoryEnabled => _historyService is not null;
+
+        public void SetHistoryEnabled(bool enabled)
+        {
+            if (enabled == HistoryEnabled) return;
+            if (enabled)
+            {
+                _historyService = new ClipboardHistoryService(ApplicationSettings.Current.ClipboardHistoryLimit);
+            }
+            else
+            {
+                _historyService?.Dispose();
+                _historyService = null;
+            }
+        }
+
         protected override void InitializeCore()
         {
-            _historyService = new ClipboardHistoryService(ApplicationSettings.Current.ClipboardHistoryLimit);
+            SetHistoryEnabled(ApplicationSettings.Current.ClipboardHistoryEnabled);
             _cleaningTimer = new DispatcherTimer(
                 TimeSpan.FromMinutes(5),
                 DispatcherPriority.Normal,
