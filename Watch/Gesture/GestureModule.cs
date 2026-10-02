@@ -71,14 +71,14 @@ namespace at365.Gesture365
             explorer(MouseTrigger.RightButtonDown, SendKeyActions.Explorer.NewTab);
             explorer(MouseTrigger.MiddleButtonDown, SendKeyActions.Explorer.NewTab);
 
-            var browser = MouseGestureManager.WhenMouse("msedge.exe", "chrome.exe");
+            var browser = MouseGestureManager.WhenMouse("msedge.exe", "chrome.exe", "brave.exe");
             browser(MouseTrigger.RightButtonDown, SendKeyActions.WebBrowser.NewTab);
             browser(MouseTrigger.MiddleButtonDown, SendKeyActions.WebBrowser.NewTab);
         }
 
         private void InitializeMoveGesture()
         {
-            var browser = MouseGestureManager.WhenMove("msedge.exe", "chrome.exe");
+            var browser = MouseGestureManager.WhenMove("msedge.exe", "chrome.exe", "brave.exe");
             //browser("新しいタブ", [MoveTrigger.MoveDown, MoveTrigger.MoveRight], SendKeyActions.WebBrowser.NewTab);
             //browser("タブを閉じる", [MoveTrigger.MoveDown, MoveTrigger.MoveLeft], SendKeyActions.WebBrowser.CloseTab);
             browser("タブを復元", [MoveTrigger.MoveUp], SendKeyActions.WebBrowser.RestoreTab);

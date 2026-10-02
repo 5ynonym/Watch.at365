@@ -274,7 +274,7 @@ namespace at365.Gesture365
             [GestureButton.Middle] =
             [
                 AppDomain.CurrentDomain.FriendlyName.ToLowerInvariant(),
-                "msedge.exe", "chrome.exe", // Web Browser
+                "msedge.exe", "chrome.exe", "brave.exe", // Web Browser
             ],
         };
 
